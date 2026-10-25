@@ -1,0 +1,6 @@
+{
+  "name": "Equilibrium",
+  "description": "High-performance, mobile-first web application for personal budget management and bilateral zero-sum roommate expense tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

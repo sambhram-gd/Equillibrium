@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {"colors": {"on-background": "#dae2fd", "surface-container-low": "#131b2e", "on-primary": "#003824", "primary-container": "#10b981", "on-error": "#690005", "on-surface": "#dae2fd", "on-error-container": "#ffdad6", "on-secondary-container": "#e6ecff", "outline": "#86948a", "surface-tint": "#4edea3", "secondary": "#adc6ff", "inverse-on-surface": "#283044", "surface-container": "#171f33", "error-container": "#93000a", "on-tertiary": "#472a00", "tertiary-fixed": "#ffddb8", "on-primary-fixed-variant": "#005236", "secondary-fixed": "#d8e2ff", "tertiary-container": "#e29100", "on-secondary": "#002e6a", "secondary-container": "#0566d9", "on-primary-container": "#00422b", "surface-container-highest": "#2d3449", "outline-variant": "#3c4a42", "primary": "#4edea3", "secondary-fixed-dim": "#adc6ff", "surface": "#0b1326", "surface-bright": "#31394d", "primary-fixed": "#6ffbbe", "on-secondary-fixed-variant": "#004395", "on-tertiary-fixed-variant": "#653e00", "on-surface-variant": "#bbcabf", "on-secondary-fixed": "#001a42", "on-primary-fixed": "#002113", "surface-container-high": "#222a3d", "tertiary-fixed-dim": "#ffb95f", "surface-variant": "#2d3449", "error": "#ffb4ab", "surface-dim": "#0b1326", "background": "#0b1326", "inverse-surface": "#dae2fd", "primary-fixed-dim": "#4edea3", "on-tertiary-container": "#523200", "inverse-primary": "#006c49", "tertiary": "#ffb95f", "surface-container-lowest": "#060e20", "on-tertiary-fixed": "#2a1700"}, "borderRadius": {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"}, "spacing": {"space-xs": "0.25rem", "space-md": "1rem", "space-xl": "2rem", "space-lg": "1.5rem", "gutter": "1rem", "space-sm": "0.5rem", "margin": "1.5kt"}, "fontFamily": {"body-md": ["Inter"], "body-sm": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "label-sm": ["Inter"], "display-lg-mobile": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "display-lg": ["Plus Jakarta Sans"], "label-md": ["Inter"]}, "fontSize": {"body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}], "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}], "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}], "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}], "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}], "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}], "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}], "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}], "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}]}}}};</script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen dark"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe"><div class="h-16 px-gutter flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="Equilibrium Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBh4tDI25badl_zUM-zy3bdc_W9HdIvp-R5QFh2Xz8sUUUKN6knTfgdy06xH5SgfuSJs4eU_Kt49EvmAIEITDBimZORaZnhN3Ue30iveQcA4KQwc4gJ-Z_DkU0IorKlVJoXDDE39yqi2nypX5Oc_jx5HAnNX1w99HMZgdZ-kargi10Xnhc1iIMfD6m1iwUrwl8dTQpVNT25mIYf_NvHipshfbVUaXYvY4PmUQPZ_fzy"/><span class="text-headline-sm font-headline-sm text-on-surface">Equilibrium</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="flex flex-col relative w-full px-gutter pt-16 pb-24 bg-surface flex-1"><div class="flex flex-col w-full gap-space-lg pb-space-xl">
+<!-- Summary Cards Grid -->
+<div class="grid grid-cols-1 gap-space-md">
+<!-- Current Balance Hero Card -->
+<div class="relative overflow-hidden bg-surface-container rounded-xl p-space-lg shadow-sm flex flex-col justify-between">
+<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between mb-space-sm">
+<span class="text-label-md text-on-surface-variant">Current Balance</span>
+<span class="px-space-sm py-space-xs rounded-full bg-primary/20 text-primary text-label-sm font-label-sm flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> +4.2% this week
+        </span>
+</div>
+<div class="text-display-lg-mobile font-display-lg-mobile text-on-surface tracking-tight mb-space-md">
+        ₹24,450
+      </div>
+<div class="flex items-center justify-between pt-space-sm border-t border-surface-variant/20">
+<div class="flex items-center gap-space-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">account_balance_wallet</span>
+<span>Primary Vault</span>
+</div>
+<button class="text-label-sm text-primary font-label-sm flex items-center gap-space-xs hover:opacity-80 transition-opacity">
+          Transfer <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Secondary Metrics Row -->
+<div class="grid grid-cols-2 gap-space-md">
+<!-- Budget Burn-Down Card -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="text-label-sm text-on-surface-variant">Monthly Budget</span>
+<span class="text-label-sm text-primary font-label-sm">61%</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface mb-space-sm">
+          ₹18,500 <span class="text-body-sm text-on-surface-variant font-normal">/ ₹30k</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-variant h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 61%;"></div>
+</div>
+</div>
+<!-- Last Salary Card -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="text-label-sm text-on-surface-variant">Last Salary</span>
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+</div>
+<div class="text-headline-sm font-headline-sm text-on-surface mb-space-xs">
+          ₹75,000
+        </div>
+<div class="text-body-sm text-on-surface-variant">
+          Credited on Oct 1
+        </div>
+</div>
+</div>
+</div>
+<!-- Rapid Log Engine -->
+<div class="bg-surface-container rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary">bolt</span>
+<span class="text-headline-sm font-headline-sm text-on-surface">Rapid Log Engine</span>
+</div>
+<!-- Mode Toggle -->
+<div class="bg-surface-variant/50 p-1 rounded-lg flex items-center gap-1">
+<button class="px-3 py-1 rounded-md text-label-sm font-label-sm bg-primary text-on-primary transition-all" id="btn-mode-slider" onclick="switchLogMode('slider')">Slider</button>
+<button class="px-3 py-1 rounded-md text-label-sm font-label-sm text-on-surface-variant hover:text-on-surface transition-all" id="btn-mode-numpad" onclick="switchLogMode('numpad')">Numpad</button>
+</div>
+</div>
+<!-- Live Amount Display -->
+<div class="text-center py-space-sm">
+<span class="text-body-sm text-on-surface-variant uppercase tracking-wider">Amount</span>
+<div class="text-display-lg-mobile font-display-lg-mobile text-primary mt-1" id="live-amount-display">₹340</div>
+</div>
+<!-- Quick Category Chips -->
+<div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+<button class="category-chip px-3 py-1.5 rounded-full bg-primary text-on-primary text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Coffee')">
+<span class="material-symbols-outlined text-[14px]">local_cafe</span> Coffee
+      </button>
+<button class="category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Breakfast')">
+<span class="material-symbols-outlined text-[14px]">bakery_dining</span> Breakfast
+      </button>
+<button class="category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Metro')">
+<span class="material-symbols-outlined text-[14px]">subway</span> Metro
+      </button>
+<button class="category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Bus')">
+<span class="material-symbols-outlined text-[14px]">directions_bus</span> Bus
+      </button>
+<button class="category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Lunch')">
+<span class="material-symbols-outlined text-[14px]">lunch_dining</span> Lunch
+      </button>
+<button class="category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Dinner')">
+<span class="material-symbols-outlined text-[14px]">dinner_dining</span> Dinner
+      </button>
+<button class="category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Groceries')">
+<span class="material-symbols-outlined text-[14px]">shopping_cart</span> Groceries
+      </button>
+<button class="category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Utilities')">
+<span class="material-symbols-outlined text-[14px]">bolt</span> Utilities
+      </button>
+<button class="category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1" onclick="selectCategory(this, 'Misc')">
+<span class="material-symbols-outlined text-[14px]">category</span> Misc
+      </button>
+</div>
+<!-- Incremental Slider View -->
+<div class="flex flex-col gap-space-md pt-2" id="engine-slider-view">
+<div class="flex items-center gap-space-md">
+<button class="w-12 h-12 rounded-xl bg-surface-variant text-on-surface flex items-center justify-center font-bold text-headline-sm active:scale-95 transition-transform" onclick="adjustAmount(-1)">-1</button>
+<input class="w-full accent-primary bg-surface-variant h-2 rounded-lg cursor-pointer" id="amount-slider" max="5000" min="10" oninput="updateSliderAmount(this.value)" step="2" type="range" value="340"/>
+<button class="w-12 h-12 rounded-xl bg-surface-variant text-on-surface flex items-center justify-center font-bold text-headline-sm active:scale-95 transition-transform" onclick="adjustAmount(1)">+1</button>
+</div>
+<button class="w-full py-3 bg-primary text-on-primary rounded-xl font-label-sm text-label-md flex items-center justify-center gap-space-sm active:scale-[0.98] transition-all shadow-sm" onclick="logExpense()">
+<span class="material-symbols-outlined">check</span> Log Expense Instantly
+      </button>
+</div>
+<!-- Virtual Numpad View -->
+<div class="hidden flex flex-col gap-space-md pt-2" id="engine-numpad-view">
+<div class="grid grid-cols-3 gap-2">
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('1')">1</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('2')">2</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('3')">3</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('4')">4</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('5')">5</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('6')">6</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('7')">7</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('8')">8</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('9')">9</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('00')">00</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl font-headline-sm text-headline-sm transition-colors" onclick="numpadInput('0')">0</button>
+<button class="py-3 bg-surface-variant/40 hover:bg-surface-variant text-on-surface rounded-xl flex items-center justify-center transition-colors" onclick="numpadBackspace()"><span class="material-symbols-outlined">backspace</span></button>
+</div>
+<button class="w-full py-3 bg-primary text-on-primary rounded-xl font-label-sm text-label-md flex items-center justify-center gap-space-sm active:scale-[0.98] transition-all shadow-sm" onclick="logExpense()">
+<span class="material-symbols-outlined">check</span> Log Expense
+      </button>
+</div>
+</div>
+<!-- Personal Passbook Feed -->
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="text-headline-sm font-headline-sm text-on-surface">Personal Passbook</span>
+<button class="text-label-sm text-primary font-label-sm">View All</button>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- Item 1 -->
+<div class="bg-surface-container rounded-xl p-space-md flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined">local_cafe</span>
+</div>
+<div>
+<div class="text-label-md font-label-md text-on-surface">Blue Bottle Coffee</div>
+<div class="text-body-sm text-on-surface-variant">Today, 08:42 AM • Coffee</div>
+</div>
+</div>
+<div class="text-right">
+<div class="text-label-md font-label-md text-error">-₹280</div>
+<div class="text-body-sm text-on-surface-variant">Completed</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-container rounded-xl p-space-md flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-full bg-secondary/10 text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined">subway</span>
+</div>
+<div>
+<div class="text-label-md font-label-md text-on-surface">Metro Ride</div>
+<div class="text-body-sm text-on-surface-variant">Today, 09:15 AM • Metro</div>
+</div>
+</div>
+<div class="text-right">
+<div class="text-label-md font-label-md text-error">-₹60</div>
+<div class="text-body-sm text-on-surface-variant">Completed</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="bg-surface-container rounded-xl p-space-md flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined">shopping_cart</span>
+</div>
+<div>
+<div class="text-label-md font-label-md text-on-surface">Groceries</div>
+<div class="text-body-sm text-on-surface-variant">Yesterday, 06:30 PM • Groceries</div>
+</div>
+</div>
+<div class="text-right">
+<div class="text-label-md font-label-md text-error">-₹1,450</div>
+<div class="text-body-sm text-on-surface-variant">Completed</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  let currentAmount = 340;
+  let selectedCategoryName = 'Coffee';
+
+  function switchLogMode(mode) {
+    const sliderView = document.getElementById('engine-slider-view');
+    const numpadView = document.getElementById('engine-numpad-view');
+    const btnSlider = document.getElementById('btn-mode-slider');
+    const btnNumpad = document.getElementById('btn-mode-numpad');
+
+    if (mode === 'slider') {
+      sliderView.classList.remove('hidden');
+      numpadView.classList.add('hidden');
+      btnSlider.className = "px-3 py-1 rounded-md text-label-sm font-label-sm bg-primary text-on-primary transition-all";
+      btnNumpad.className = "px-3 py-1 rounded-md text-label-sm font-label-sm text-on-surface-variant hover:text-on-surface transition-all";
+    } else {
+      sliderView.classList.add('hidden');
+      numpadView.classList.remove('hidden');
+      btnNumpad.className = "px-3 py-1 rounded-md text-label-sm font-label-sm bg-primary text-on-primary transition-all";
+      btnSlider.className = "px-3 py-1 rounded-md text-label-sm font-label-sm text-on-surface-variant hover:text-on-surface transition-all";
+    }
+  }
+
+  function updateDisplay() {
+    document.getElementById('live-amount-display').innerText = '₹' + currentAmount.toLocaleString('en-IN');
+    const slider = document.getElementById('amount-slider');
+    if(slider) slider.value = currentAmount;
+  }
+
+  function updateSliderAmount(val) {
+    currentAmount = parseInt(val);
+    updateDisplay();
+  }
+
+  function adjustAmount(delta) {
+    currentAmount = Math.max(0, currentAmount + delta * 2);
+    updateDisplay();
+  }
+
+  function numpadInput(digit) {
+    if (currentAmount === 0 && digit !== '00') {
+      currentAmount = parseInt(digit);
+    } else {
+      let str = currentAmount.toString() + digit;
+      if (str.length > 6) return;
+      currentAmount = parseInt(str);
+    }
+    updateDisplay();
+  }
+
+  function numpadBackspace() {
+    let str = currentAmount.toString();
+    if (str.length <= 1) {
+      currentAmount = 0;
+    } else {
+      currentAmount = parseInt(str.slice(0, -1));
+    }
+    updateDisplay();
+  }
+
+  function selectCategory(el, catName) {
+    document.querySelectorAll('.category-chip').forEach(chip => {
+      chip.className = "category-chip px-3 py-1.5 rounded-full bg-surface-variant text-on-surface-variant text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1";
+    });
+    el.className = "category-chip px-3 py-1.5 rounded-full bg-primary text-on-primary text-label-sm font-label-sm whitespace-nowrap transition-all flex items-center gap-1";
+    selectedCategoryName = catName;
+  }
+
+  function logExpense() {
+    if (currentAmount <= 0) return;
+    alert(`Successfully logged ₹${currentAmount} under ${selectedCategoryName}!`);
+    currentAmount = 0;
+    updateDisplay();
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-20 px-space-md"><a aria-current="page" class="flex flex-col items-center justify-center gap-space-xs w-16 h-16 transition-all text-primary font-bold" data-path="personal-space" href="#"><span class="material-symbols-outlined">person</span><span class="text-label-sm">Personal</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-16 text-on-surface-variant hover:text-on-surface transition-all" data-path="shared-ledger" href="#"><span class="material-symbols-outlined">receipt_long</span><span class="text-label-sm">Ledger</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-16 text-on-surface-variant hover:text-on-surface transition-all" data-path="partner-view" href="#"><span class="material-symbols-outlined">group</span><span class="text-label-sm">Partner</span></a></div></nav></body></html>

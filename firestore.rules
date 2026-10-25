@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Owner can read their own profile, or linked partner can view partner details
+      allow get: if isSignedIn() && (
+        request.auth.uid == userId ||
+        ('partnerUid' in resource.data && resource.data.partnerUid == request.auth.uid)
+      );
+      allow list: if isSignedIn() && (
+        resource.data.email == request.auth.token.email ||
+        ('partnerUid' in resource.data && resource.data.partnerUid == request.auth.uid)
+      );
+
+      // User can create their own profile
+      allow create: if isOwner(userId) &&
+        incoming().displayName is string && incoming().displayName.size() <= 100 &&
+        incoming().email is string && incoming().email.size() <= 120 &&
+        incoming().currentBalance is number &&
+        incoming().monthlyBudget is number &&
+        incoming().salaryAmount is number;
+
+      // User can update their own profile, or partner linking
+      allow update: if isSignedIn() && (
+        isOwner(userId) ||
+        (incoming().diff(existing()).affectedKeys().hasOnly(['partnerUid', 'partnerEmail']) &&
+         incoming().partnerUid == request.auth.uid)
+      );
+
+      // Personal Logs Subcollection
+      match /personal_logs/{logId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Pairing Codes
+    match /pairing_codes/{code} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && incoming().uid == request.auth.uid;
+      allow delete: if isSignedIn() && existing().uid == request.auth.uid;
+    }
+
+    // Shared Ledgers
+    match /shared_ledgers/{ledgerId} {
+      allow get: if isSignedIn() && (request.auth.uid in resource.data.members);
+      allow list: if isSignedIn() && (request.auth.uid in resource.data.members);
+
+      allow create: if isSignedIn() && (request.auth.uid in incoming().members) &&
+        incoming().members.size() == 2 &&
+        incoming().user1 is string && incoming().user2 is string &&
+        incoming().netBalance is number;
+
+      allow update: if isSignedIn() && (request.auth.uid in resource.data.members) &&
+        incoming().members == existing().members &&
+        incoming().user1 == existing().user1 &&
+        incoming().user2 == existing().user2 &&
+        incoming().netBalance is number;
+
+      // Shared Transactions Subcollection
+      match /transactions/{txId} {
+        allow read: if isSignedIn() && (
+          request.auth.uid in get(/databases/$(database)/documents/shared_ledgers/$(ledgerId)).data.members
+        );
+        allow create: if isSignedIn() &&
+          (request.auth.uid in get(/databases/$(database)/documents/shared_ledgers/$(ledgerId)).data.members) &&
+          incoming().paidBy is string &&
+          incoming().totalAmount is number &&
+          incoming().splitAmountOther is number &&
+          incoming().category is string;
+        allow delete, update: if isSignedIn() && (
+          request.auth.uid in get(/databases/$(database)/documents/shared_ledgers/$(ledgerId)).data.members
+        );
+      }
+    }
+  }
+}

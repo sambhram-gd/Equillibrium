@@ -1,0 +1,176 @@
+---
+name: Equilibrium
+colors:
+  surface: '#0b1326'
+  surface-dim: '#0b1326'
+  surface-bright: '#31394d'
+  surface-container-lowest: '#060e20'
+  surface-container-low: '#131b2e'
+  surface-container: '#171f33'
+  surface-container-high: '#222a3d'
+  surface-container-highest: '#2d3449'
+  on-surface: '#dae2fd'
+  on-surface-variant: '#bbcabf'
+  inverse-surface: '#dae2fd'
+  inverse-on-surface: '#283044'
+  outline: '#86948a'
+  outline-variant: '#3c4a42'
+  surface-tint: '#4edea3'
+  primary: '#4edea3'
+  on-primary: '#003824'
+  primary-container: '#10b981'
+  on-primary-container: '#00422b'
+  inverse-primary: '#006c49'
+  secondary: '#adc6ff'
+  on-secondary: '#002e6a'
+  secondary-container: '#0566d9'
+  on-secondary-container: '#e6ecff'
+  tertiary: '#ffb95f'
+  on-tertiary: '#472a00'
+  tertiary-container: '#e29100'
+  on-tertiary-container: '#523200'
+  error: '#ffb4ab'
+  on-error: '#690005'
+  error-container: '#93000a'
+  on-error-container: '#ffdad6'
+  primary-fixed: '#6ffbbe'
+  primary-fixed-dim: '#4edea3'
+  on-primary-fixed: '#002113'
+  on-primary-fixed-variant: '#005236'
+  secondary-fixed: '#d8e2ff'
+  secondary-fixed-dim: '#adc6ff'
+  on-secondary-fixed: '#001a42'
+  on-secondary-fixed-variant: '#004395'
+  tertiary-fixed: '#ffddb8'
+  tertiary-fixed-dim: '#ffb95f'
+  on-tertiary-fixed: '#2a1700'
+  on-tertiary-fixed-variant: '#653e00'
+  background: '#0b1326'
+  on-background: '#dae2fd'
+  surface-variant: '#2d3449'
+typography:
+  display-lg:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 40px
+    fontWeight: '700'
+    lineHeight: 48px
+    letterSpacing: -0.02em
+  display-lg-mobile:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 32px
+    fontWeight: '700'
+    lineHeight: 40px
+    letterSpacing: -0.02em
+  headline-md:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 24px
+    fontWeight: '600'
+    lineHeight: 32px
+    letterSpacing: -0.01em
+  headline-sm:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 18px
+    fontWeight: '600'
+    lineHeight: 24px
+  body-lg:
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: '400'
+    lineHeight: 24px
+  body-md:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: '400'
+    lineHeight: 20px
+  body-sm:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: '400'
+    lineHeight: 16px
+  label-md:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: '500'
+    lineHeight: 20px
+  label-sm:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: '500'
+    lineHeight: 16px
+rounded:
+  sm: 0.25rem
+  DEFAULT: 0.5rem
+  md: 0.75rem
+  lg: 1rem
+  xl: 1.5rem
+  full: 9999px
+spacing:
+  gutter: 1rem
+  margin: 1.5kt
+  space-xs: 0.25rem
+  space-sm: 0.5rem
+  space-md: 1rem
+  space-lg: 1.5rem
+  space-xl: 2rem
+---
+
+## Brand & Style
+
+This design system is built for a modern fintech experience that balances financial precision with the casual, shared realities of roommate living. The target audience includes young professionals and students who demand speed, absolute clarity, and zero friction when settling shared debts. The UI evokes feelings of trust, effortless control, and instant financial relief—transforming the tedious chore of expense tracking into a satisfying, gamified routine.
+
+The visual style merges a **Corporate / Modern** fintech framework with **Tactile / Skeuomorphic** micro-interactions. It prioritizes high-contrast legibility, immediate visual feedback on monetary actions, and clean, modular card containers that segment complex household ledgers into digestible, glanceable metrics.
+
+## Colors
+
+The color palette is anchored by a rich deep slate background (`#0F172A`) that reduces eye strain and provides a premium canvas for financial data. Emerald green (`#10B981`) serves as the primary financial accent, signaling positive balances, successful settlements, and active states. 
+
+A disciplined secondary palette utilizes crisp white (`#F8FAFC`) for primary typography, muted slate (`#94A3B8`) for secondary labels, and functional semantic tones (amber for pending requests, soft crimson for outstanding debts) to maintain absolute clarity during split calculations.
+
+## Typography
+
+Typography establishes an immediate hierarchy of financial data. **Plus Jakarta Sans** is employed for headlines and numerical displays, offering geometric precision with friendly, rounded traits that soften the intimidation of money management. **Inter** handles all body copy, metadata, and transaction tables, ensuring razor-sharp readability at small sizes. 
+
+Numerical figures across all viewports must utilize tabular lining numerals to ensure vertical alignment in ledger lists and balance summaries.
+
+## Layout & Spacing
+
+The layout relies on a **Fluid grid** system optimized for rapid scanning on mobile devices while scaling gracefully to desktop dashboards. The architecture uses a 12-column structure on desktop, collapsing to 4 columns on mobile, governed by a strict 8px foundational spacing rhythm.
+
+- **Mobile:** 16px outer margins, 12px gutters. Compact spacing (`space-sm`, `space-md`) ensures dense transaction lists remain thumb-friendly without requiring excessive scrolling.
+- **Tablet & Desktop:** 24px to 32px outer margins, 16px gutters. Containers max out at 1200px to maintain optimal line lengths for tabular ledger data.
+
+## Elevation & Depth
+
+Depth is conveyed through **Low-contrast outlines** paired with subtle tonal layering. Because the application operates on a deep slate canvas, cards and interactive surfaces are elevated using 1px ghost borders (`#1E293B`) rather than heavy drop shadows. 
+
+Hover and active states introduce micro-elevation via faint, ambient emerald-tinted glows (`rgba(16, 185, 129, 0.08)`) and fractional surface lightening. This maintains a clean, flat aesthetic while providing unmistakable tactile feedback for interactive elements.
+
+## Shapes
+
+The design system employs a **Rounded** shape language (`roundedness` level 2), featuring a base 0.5rem (8px) border radius for standard containers, inputs, and buttons, scaling up to 1rem for large cards. This balanced geometry avoids the severity of sharp corners and the excessive casualness of pill shapes, striking a mature yet approachable tone suited for shared household finances.
+
+## Components
+
+### Buttons
+- **Primary:** Solid emerald green (`#10B981`) background with dark slate text. Features a slight active scale-down (tactile press effect) and a subtle inner highlight.
+- **Secondary:** Transparent background with a 1px slate outline and crisp white text.
+- **Destructive:** Used for removing expenses or leaving groups, rendered in soft crimson with high-contrast text.
+
+### Chips & Badges
+- Used for expense categories (Utilities, Groceries, Rent) and settlement statuses (Paid, Pending). Rendered with subtle background tints and matching text colors for instant visual parsing.
+
+### Lists & Tables
+- Ledger items must feature alternating row states or clear 1px dividers. Avatars of roommates should be anchored to the left, followed by the expense description, category chip, and right-aligned numerical amounts.
+
+### Checkboxes & Radio Buttons
+- Custom-styled with high-contrast borders. Checked states instantly fill with the primary emerald accent accompanied by a crisp white checkmark icon.
+
+### Input Fields
+- Designed with deep slate fill, subtle borders, and floating labels. Focus states transition the border to emerald green with an ambient glow to guide rapid data entry.
+
+### Cards
+- Modular containers used for summary balances and quick-action widgets. They feature a solid surface color slightly lighter than the background, bound by a 1px subtle border.
+
+### Additional Components
+- **Split Slider:** A tactile, multi-colored progress bar for dividing shared bills unevenly among roommates.
+- **Settlement Action Sheet:** A bottom sheet optimized for mobile devices that aggregates owed balances and triggers instant payment integrations with a single tap.

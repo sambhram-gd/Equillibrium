@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #0b1326;
+  --color-surface-dim: #0b1326;
+  --color-surface-bright: #31394d;
+  --color-surface-container-lowest: #060e20;
+  --color-surface-container-low: #131b2e;
+  --color-surface-container: #171f33;
+  --color-surface-container-high: #222a3d;
+  --color-surface-container-highest: #2d3449;
+  --color-surface-variant: #2d3449;
+  --color-on-surface: #dae2fd;
+  --color-on-surface-variant: #bbcabf;
+  --color-primary: #4edea3;
+  --color-on-primary: #003824;
+  --color-primary-container: #10b981;
+  --color-on-primary-container: #00422b;
+  --color-secondary: #adc6ff;
+  --color-on-secondary: #002e6a;
+  --color-secondary-container: #0566d9;
+  --color-tertiary: #ffb95f;
+  --color-on-tertiary: #472a00;
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-outline: #86948a;
+  --color-outline-variant: #3c4a42;
+  --font-headline: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+@layer base {
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #0b1326;
+    color: #dae2fd;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

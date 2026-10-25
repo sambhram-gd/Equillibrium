@@ -1,0 +1,194 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing personal budget configuration and roommate link",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Display name of user"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "User email address"
+        },
+        "partnerUid": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "UID of linked roommate/partner"
+        },
+        "partnerEmail": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Email of linked roommate/partner"
+        },
+        "currentBalance": {
+          "type": "number",
+          "description": "Current liquid bank balance in INR"
+        },
+        "monthlyBudget": {
+          "type": "number",
+          "description": "Monthly budget cap in INR"
+        },
+        "salaryAmount": {
+          "type": "number",
+          "description": "Last salary credited amount in INR"
+        },
+        "salaryDate": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Date or ISO string of last salary"
+        },
+        "pairCode": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "6-character unique pairing code"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["displayName", "email", "currentBalance", "monthlyBudget", "salaryAmount"]
+    },
+    "PersonalLog": {
+      "title": "PersonalLog",
+      "description": "Personal expense or credit log",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Amount in INR"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Category name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["debit", "credit"],
+          "description": "Transaction type"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of the transaction"
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Optional note"
+        }
+      },
+      "required": ["amount", "category", "type"]
+    },
+    "SharedLedger": {
+      "title": "SharedLedger",
+      "description": "Bilateral zero-sum ledger between two roommates",
+      "type": "object",
+      "properties": {
+        "members": {
+          "type": "array",
+          "description": "Array of the two member UIDs"
+        },
+        "user1": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "UID of user 1 (alphabetically lower)"
+        },
+        "user2": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "UID of user 2 (alphabetically higher)"
+        },
+        "netBalance": {
+          "type": "number",
+          "description": "Cumulative balance: Positive means User 1 is owed; Negative means User 2 is owed; 0 means settled"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Timestamp of last update"
+        }
+      },
+      "required": ["members", "user1", "user2", "netBalance"]
+    },
+    "SharedTransaction": {
+      "title": "SharedTransaction",
+      "description": "A split transaction within the shared ledger",
+      "type": "object",
+      "properties": {
+        "paidBy": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "UID of the member who paid"
+        },
+        "paidByName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Name of payer"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total amount paid in INR"
+        },
+        "splitAmountOther": {
+          "type": "number",
+          "description": "The exact amount the other person owes"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Expense category"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Expense description or note"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of split"
+        }
+      },
+      "required": ["paidBy", "paidByName", "totalAmount", "splitAmountOther", "category"]
+    },
+    "PairingCode": {
+      "title": "PairingCode",
+      "description": "6-character invite code lookup for connecting roommates",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 120 },
+        "pairCode": { "type": "string", "maxLength": 20 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "displayName", "email", "pairCode"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores user personal configuration and liquid balance"
+    },
+    "/users/{userId}/personal_logs/{logId}": {
+      "schema": "PersonalLog",
+      "description": "Personal expense logs and salary credits"
+    },
+    "/shared_ledgers/{ledgerId}": {
+      "schema": "SharedLedger",
+      "description": "Shared bilateral ledger between two paired roommates"
+    },
+    "/shared_ledgers/{ledgerId}/transactions/{txId}": {
+      "schema": "SharedTransaction",
+      "description": "Individual split transactions in the shared ledger"
+    },
+    "/pairing_codes/{code}": {
+      "schema": "PairingCode",
+      "description": "Pairing code lookup documents for connecting roommates"
+    }
+  }
+}

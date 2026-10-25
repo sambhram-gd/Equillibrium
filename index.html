@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Equilibrium</title>
+    <meta name="description" content="High-performance, mobile-first web application for personal budget management and bilateral zero-sum roommate expense tracking." />
+    <meta property="og:title" content="Equilibrium" />
+    <meta property="og:description" content="High-performance, mobile-first web application for personal budget management and bilateral zero-sum roommate expense tracking." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        background-color: #0b1326;
+        color: #dae2fd;
+        overscroll-behavior: none;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      .font-headline {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      .tabular-nums {
+        font-variant-numeric: tabular-nums;
+      }
+      /* Hide scrollbar */
+      ::-webkit-scrollbar {
+        display: none;
+      }
+      * {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
+  <body class="bg-[#0b1326] text-[#dae2fd] min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
