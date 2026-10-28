@@ -1,6 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { logoutUser } from '../firebase';
+import {
+  isNotificationSupported,
+  isNotificationsEnabled,
+  setNotificationsEnabled,
+  requestNotificationPermission,
+  notifyRoommateActivity,
+  playNotificationChime,
+} from '../services/notificationService';
 
 interface HeaderProps {
   user: UserProfile;
@@ -10,6 +18,16 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ user, onOpenIncomeModal }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [notifyOn, setNotifyOn] = useState<boolean>(() => isNotificationsEnabled());
+  const [isRequestingNotify, setIsRequestingNotify] = useState<boolean>(false);
+
+  useEffect(() => {
+    const syncState = () => {
+      setNotifyOn(isNotificationsEnabled());
+    };
+    window.addEventListener('eq_notify_pref_changed', syncState);
+    return () => window.removeEventListener('eq_notify_pref_changed', syncState);
+  }, []);
 
   const handleCopyCode = () => {
     if (user.pairCode) {
@@ -18,6 +36,52 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenIncomeModal }) => {
       setTimeout(() => setCopiedCode(false), 2000);
     }
   };
+
+  const handleToggleNotifications = async () => {
+    if (notifyOn) {
+      // Turn off
+      setNotificationsEnabled(false);
+      setNotifyOn(false);
+    } else {
+      // Turn on: every time, request the browser permission prompt
+      setIsRequestingNotify(true);
+      try {
+        const permission = await requestNotificationPermission();
+        if (permission === 'granted') {
+          setNotifyOn(true);
+          playNotificationChime();
+          // Trigger test Swiggy-style notification banner
+          notifyRoommateActivity({
+            id: 'sample_alert_' + Date.now(),
+            title: '🔔 Roommate Alerts Active',
+            body: "You'll be notified instantly like Swiggy whenever your roommate logs or settles a split.",
+            senderName: user.displayName || 'Roommate',
+            timestamp: new Date().toISOString(),
+          });
+        } else if (permission === 'denied') {
+          setNotifyOn(false);
+          alert('Notification permission was blocked in your browser settings. Please tap the lock icon in your browser address bar to allow notifications.');
+        } else {
+          setNotifyOn(false);
+        }
+      } finally {
+        setIsRequestingNotify(false);
+      }
+    }
+  };
+
+  const handleTestAlert = () => {
+    playNotificationChime();
+    notifyRoommateActivity({
+      id: 'test_alert_' + Date.now(),
+      title: `⚡ ${user.partnerName || 'Roommate'} added a split`,
+      body: '₹1,200 for Groceries Haul • Your share: ₹600. Net balance updated.',
+      senderName: user.partnerName || 'Roommate',
+      timestamp: new Date().toISOString(),
+    });
+  };
+
+  const supported = isNotificationSupported();
 
   return (
     <header className="fixed top-0 inset-x-0 z-40 bg-[#070c18]/85 backdrop-blur-2xl border-b border-white/[0.06] pt-safe transition-all">
@@ -82,7 +146,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenIncomeModal }) => {
                   className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs"
                   onClick={() => setShowMenu(false)}
                 />
-                <div className="absolute right-0 mt-2 w-72 bg-[#0e1629]/95 border border-white/[0.12] rounded-2xl shadow-2xl z-40 p-4 flex flex-col gap-3 text-xs animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur-2xl">
+                <div className="absolute right-0 mt-2 w-80 bg-[#0e1629]/95 border border-white/[0.12] rounded-3xl shadow-2xl z-40 p-4 flex flex-col gap-3.5 text-xs animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur-2xl">
                   {/* User details */}
                   <div className="pb-3 border-b border-white/[0.08]">
                     <p className="font-bold text-sm text-white font-headline truncate">
@@ -91,8 +155,62 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenIncomeModal }) => {
                     <p className="text-[11px] text-[#94a3b8] truncate mt-0.5">{user.email}</p>
                   </div>
 
+                  {/* Settings Section: Swiggy/Zomato Roommate Notifications */}
+                  <div className="bg-[#070c18] p-3.5 rounded-2xl border border-white/[0.08] flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#34d399] text-[20px]">
+                          notifications_active
+                        </span>
+                        <div>
+                          <p className="font-bold text-white text-xs font-headline">
+                            Roommate Alerts
+                          </p>
+                          <p className="text-[10px] text-[#94a3b8]">
+                            Swiggy/Zomato style pop-ups
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Toggle Switch */}
+                      <button
+                        onClick={handleToggleNotifications}
+                        disabled={isRequestingNotify}
+                        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none p-0.5 ${
+                          notifyOn ? 'bg-[#10b981]' : 'bg-[#1e293b]'
+                        }`}
+                        title={notifyOn ? 'Turn Off Alerts' : 'Turn On Alerts'}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                            notifyOn ? 'translate-x-6' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 border-t border-white/[0.06] text-[10px]">
+                      <span className="text-[#94a3b8]">
+                        Status: <strong className={notifyOn ? 'text-[#34d399]' : 'text-amber-400'}>
+                          {notifyOn ? 'Active (ON)' : 'Disabled (OFF)'}
+                        </strong>
+                      </span>
+
+                      {notifyOn && (
+                        <button
+                          type="button"
+                          onClick={handleTestAlert}
+                          className="text-[#34d399] hover:underline font-bold flex items-center gap-1 active:scale-95"
+                        >
+                          <span className="material-symbols-outlined text-[13px]">play_arrow</span>
+                          <span>Test Alert</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Roommate Invite Code Box */}
-                  <div className="bg-[#070c18] p-3 rounded-xl border border-white/[0.08] flex items-center justify-between">
+                  <div className="bg-[#070c18] p-3 rounded-2xl border border-white/[0.08] flex items-center justify-between">
                     <div>
                       <p className="text-[10px] text-[#94a3b8] uppercase font-bold tracking-wider">
                         My Roommate Code

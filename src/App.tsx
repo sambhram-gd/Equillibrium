@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import {
@@ -22,6 +22,7 @@ import {
   getLocalLedger,
   getLocalTransactions,
 } from './services/sharedLedgerService';
+import { notifyRoommateActivity } from './services/notificationService';
 
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
@@ -31,6 +32,7 @@ import { PartnerView } from './components/PartnerView';
 import { AuthScreen } from './components/AuthScreen';
 import { OnboardingModal } from './components/OnboardingModal';
 import { QuickIncomeModal } from './components/QuickIncomeModal';
+import { NotificationBanner } from './components/NotificationBanner';
 
 export interface AppUser {
   uid: string;
@@ -105,6 +107,9 @@ export default function App() {
 
   // Quick Income Modal State
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState<boolean>(false);
+
+  // Track known transaction IDs to alert on newly incoming roommate splits
+  const previousTxIdsRef = useRef<Set<string> | null>(null);
 
   // Sync guest login
   const refreshAuthFromStorage = useCallback(() => {
@@ -196,6 +201,43 @@ export default function App() {
 
     const unsubscribeTxs = listenToSharedTransactions(ledgerId, (txs) => {
       setSharedTransactions(txs);
+
+      // Detect newly incoming transactions logged by roommate
+      if (!previousTxIdsRef.current) {
+        // First snapshot: index existing transactions without alerting
+        previousTxIdsRef.current = new Set(txs.map((t) => t.id || t.timestamp));
+      } else {
+        const known = previousTxIdsRef.current;
+        txs.forEach((tx) => {
+          const id = tx.id || tx.timestamp;
+          if (!known.has(id)) {
+            // New transaction detected!
+            const isMe = tx.paidBy === authUser.uid;
+            if (!isMe) {
+              const sender = tx.paidByName || userProfile.partnerName || 'Roommate';
+              const title = tx.isSettlement
+                ? '🤝 Ledger Settled!'
+                : `⚡ ${sender} added an expense`;
+              const body = tx.isSettlement
+                ? `${sender} settled up the bilateral balance to ₹0.00.`
+                : `₹${Math.round(tx.totalAmount).toLocaleString('en-IN')} for ${tx.description || tx.category} • Your share: ₹${Math.round(tx.splitAmountOther).toLocaleString('en-IN')}`;
+
+              notifyRoommateActivity({
+                id,
+                title,
+                body,
+                senderName: sender,
+                category: tx.category,
+                amount: tx.totalAmount,
+                yourShare: tx.splitAmountOther,
+                timestamp: tx.timestamp,
+                isSettlement: tx.isSettlement,
+              });
+            }
+          }
+        });
+        previousTxIdsRef.current = new Set(txs.map((t) => t.id || t.timestamp));
+      }
     });
 
     return () => {
@@ -254,6 +296,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0b1326] text-[#dae2fd] flex flex-col selection:bg-[#4edea3]/30">
+      {/* Floating Swiggy/Zomato Style In-App Notification Banner */}
+      <NotificationBanner />
+
       {/* Top Header Bar */}
       <Header
         user={userProfile}

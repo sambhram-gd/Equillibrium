@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile, SharedLedger, SharedTransaction } from '../types';
 import { pairWithRoommate, unlinkPartner } from '../services/userService';
+import {
+  isNotificationsEnabled,
+  setNotificationsEnabled,
+  requestNotificationPermission,
+  notifyRoommateActivity,
+  playNotificationChime,
+} from '../services/notificationService';
 
 interface PartnerViewProps {
   user: UserProfile;
@@ -21,6 +28,35 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [notifyOn, setNotifyOn] = useState<boolean>(() => isNotificationsEnabled());
+
+  useEffect(() => {
+    const handleSync = () => setNotifyOn(isNotificationsEnabled());
+    window.addEventListener('eq_notify_pref_changed', handleSync);
+    return () => window.removeEventListener('eq_notify_pref_changed', handleSync);
+  }, []);
+
+  const handleToggleNotify = async () => {
+    if (notifyOn) {
+      setNotificationsEnabled(false);
+      setNotifyOn(false);
+    } else {
+      const permission = await requestNotificationPermission();
+      if (permission === 'granted') {
+        setNotifyOn(true);
+        playNotificationChime();
+        notifyRoommateActivity({
+          id: 'roommate_alert_active_' + Date.now(),
+          title: '🔔 Roommate Alerts Active',
+          body: `You'll be alerted whenever ${user.partnerName || 'your roommate'} logs a shared expense.`,
+          senderName: user.partnerName || 'Roommate',
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        setNotifyOn(false);
+      }
+    }
+  };
 
   const isLinked = Boolean(user.partnerUid);
 
@@ -257,6 +293,37 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
                 {myNetBalance === 0 ? '₹0.00' : formatINR(myNetBalance)}
               </span>
             </div>
+          </div>
+
+          {/* Instant Roommate Alerts Quick Pill */}
+          <div className="glass-panel rounded-3xl p-4 border border-white/10 flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
+                  notifyOn ? 'bg-[#10b981]/20 text-[#34d399]' : 'bg-white/[0.06] text-[#a0aec0]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  {notifyOn ? 'notifications_active' : 'notifications_off'}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white font-headline">Instant Roommate Alerts</p>
+                <p className="text-[10px] text-[#a0aec0]">
+                  {notifyOn ? 'Active: Swiggy-style pop-ups & chimes' : 'Off: Tap to enable live alerts'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleToggleNotify}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold font-headline transition-all active:scale-95 ${
+                notifyOn
+                  ? 'bg-white/[0.08] text-white border border-white/10 hover:bg-white/[0.12]'
+                  : 'bg-gradient-to-r from-[#10b981] to-[#34d399] text-[#013421] shadow-md shadow-[#10b981]/25'
+              }`}
+            >
+              {notifyOn ? 'Turn Off' : 'Enable'}
+            </button>
           </div>
 
           {/* Shared Statistics Grid */}
