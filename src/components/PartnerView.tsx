@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { UserProfile, SharedLedger, SharedTransaction } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { UserProfile, SharedLedger, SharedTransaction, PersonalLog } from '../types';
 import { pairWithRoommate, unlinkPartner } from '../services/userService';
 import {
   isNotificationsEnabled,
@@ -11,13 +11,27 @@ import {
 
 interface PartnerViewProps {
   user: UserProfile;
+  partnerProfile?: UserProfile | null;
+  partnerLogs?: PersonalLog[];
   ledger: SharedLedger | null;
   transactions: SharedTransaction[];
   onRefreshProfile?: () => void;
 }
 
+interface RoommateActivityItem {
+  id: string;
+  amount: number;
+  category: string;
+  note?: string;
+  timestamp: string;
+  type: 'personal' | 'shared_fronted' | 'settlement';
+  splitAmountOther?: number;
+}
+
 export const PartnerView: React.FC<PartnerViewProps> = ({
   user,
+  partnerProfile,
+  partnerLogs = [],
   ledger,
   transactions,
 }) => {
@@ -29,6 +43,7 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [notifyOn, setNotifyOn] = useState<boolean>(() => isNotificationsEnabled());
+  const [filterPeriod, setFilterPeriod] = useState<'all' | 'today' | 'week' | 'month'>('all');
 
   useEffect(() => {
     const handleSync = () => setNotifyOn(isNotificationsEnabled());
@@ -59,6 +74,8 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
   };
 
   const isLinked = Boolean(user.partnerUid);
+  const partnerName = partnerProfile?.displayName || user.partnerName || 'Roommate';
+  const partnerEmail = partnerProfile?.email || user.partnerEmail || 'Paired Roommate';
 
   const handleCopyCode = () => {
     if (user.pairCode) {
@@ -100,17 +117,18 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
     }
   };
 
-  // Calculate stats from transactions
-  let totalFrontedByMe = 0;
-  let totalFrontedByPartner = 0;
+  // Calculate bilateral balance
   let myNetBalance = 0;
-
   if (ledger) {
     const isUser1 =
       user.uid === ledger.user1 ||
       (user.email && ledger.user1 && ledger.user1.includes(user.email.toLowerCase().replace(/[^a-z0-9]/g, '_')));
     myNetBalance = isUser1 ? ledger.netBalance : -ledger.netBalance;
   }
+
+  // Calculate mutual totals
+  let totalFrontedByMe = 0;
+  let totalFrontedByPartner = 0;
 
   transactions.forEach((tx) => {
     if (tx.isSettlement) return;
@@ -124,12 +142,117 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
 
   const totalMutualSpend = totalFrontedByMe + totalFrontedByPartner;
 
+  // Build Roommate's Unified Transparent Activity Stream
+  const combinedRoommateLogs = useMemo<RoommateActivityItem[]>(() => {
+    const itemsMap = new Map<string, RoommateActivityItem>();
+
+    // 1. Add Roommate's personal logs
+    partnerLogs.forEach((log) => {
+      const id = log.id || log.timestamp;
+      itemsMap.set(id, {
+        id,
+        amount: log.amount,
+        category: log.category,
+        note: log.note,
+        timestamp: log.timestamp,
+        type: 'personal',
+      });
+    });
+
+    // 2. Add shared transactions where roommate was the payer
+    transactions.forEach((tx) => {
+      const isRoommatePayer =
+        tx.paidBy === user.partnerUid ||
+        (user.displayName && tx.paidByName !== user.displayName && tx.paidBy !== user.uid);
+
+      if (isRoommatePayer) {
+        const id = tx.id || tx.timestamp;
+        itemsMap.set(id, {
+          id,
+          amount: tx.totalAmount,
+          category: tx.category,
+          note: tx.description,
+          timestamp: tx.timestamp,
+          type: tx.isSettlement ? 'settlement' : 'shared_fronted',
+          splitAmountOther: tx.splitAmountOther,
+        });
+      }
+    });
+
+    return Array.from(itemsMap.values()).sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }, [partnerLogs, transactions, user.partnerUid, user.displayName]);
+
+  // Filter roommate logs by selected period
+  const filteredRoommateLogs = useMemo(() => {
+    if (filterPeriod === 'all') return combinedRoommateLogs;
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+    return combinedRoommateLogs.filter((log) => {
+      const logTime = new Date(log.timestamp).getTime();
+      if (filterPeriod === 'today') return logTime >= startOfDay;
+      if (filterPeriod === 'week') {
+        const startOfWeek = startOfDay - (now.getDay() === 0 ? 6 : now.getDay() - 1) * 86400000;
+        return logTime >= startOfWeek;
+      }
+      if (filterPeriod === 'month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+        return logTime >= startOfMonth;
+      }
+      return true;
+    });
+  }, [combinedRoommateLogs, filterPeriod]);
+
+  // Roommate's monthly spend
+  const roommateMonthlySpend = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    return combinedRoommateLogs.reduce((total, log) => {
+      const logTime = new Date(log.timestamp).getTime();
+      if (logTime >= startOfMonth && log.type !== 'settlement') {
+        return total + log.amount;
+      }
+      return total;
+    }, 0);
+  }, [combinedRoommateLogs]);
+
+  // Roommate budget burndown calculations
+  const partnerBudgetCap = partnerProfile?.monthlyBudget || 30000;
+  const partnerBudgetPercent = Math.min(100, Math.round((roommateMonthlySpend / partnerBudgetCap) * 100));
+
+  // Roommate liquid balance
+  const partnerLiquidBalance =
+    partnerProfile?.currentBalance !== undefined
+      ? partnerProfile.currentBalance
+      : Math.max(0, (partnerProfile?.salaryAmount || 75000) - roommateMonthlySpend);
+
   const formatINR = (val: number) => {
     return '₹' + Math.abs(Math.round(val)).toLocaleString('en-IN');
   };
 
+  const getCategoryIcon = (category: string) => {
+    const c = (category || '').toLowerCase();
+    if (c.includes('coffee') || c.includes('cafe')) return 'local_cafe';
+    if (c.includes('breakfast') || c.includes('bakery')) return 'bakery_dining';
+    if (c.includes('metro') || c.includes('subway') || c.includes('train')) return 'subway';
+    if (c.includes('bus')) return 'directions_bus';
+    if (c.includes('lunch')) return 'lunch_dining';
+    if (c.includes('dinner')) return 'dinner_dining';
+    if (c.includes('grocer') || c.includes('mart') || c.includes('nature')) return 'shopping_cart';
+    if (c.includes('util') || c.includes('power') || c.includes('electric') || c.includes('gas') || c.includes('bill')) return 'bolt';
+    if (c.includes('rent') || c.includes('house') || c.includes('room')) return 'home';
+    if (c.includes('wifi') || c.includes('internet')) return 'wifi';
+    if (c.includes('clean') || c.includes('maid') || c.includes('suppl')) return 'cleaning_services';
+    if (c.includes('taxi') || c.includes('cab') || c.includes('uber') || c.includes('ola')) return 'local_taxi';
+    if (c.includes('salary') || c.includes('income')) return 'payments';
+    return 'category';
+  };
+
   return (
-    <div className="flex flex-col gap-5 pb-6">
+    <div className="flex flex-col gap-5 pb-8 select-none">
       {/* Notifications */}
       {successMsg && (
         <div className="p-3.5 bg-[#10b981]/20 border border-[#34d399]/40 text-[#34d399] text-xs font-semibold rounded-2xl flex items-center gap-2.5 animate-in fade-in duration-150">
@@ -177,7 +300,7 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
             </div>
 
             <p className="text-xs text-[#a0aec0] leading-relaxed">
-              When your roommate enters your code, Equilibrium automatically creates a zero-sum bilateral ledger between both accounts.
+              When your roommate enters your code, Equilibrium automatically creates a zero-sum bilateral ledger between both accounts with full dashboard transparency.
             </p>
           </div>
 
@@ -217,47 +340,27 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
               </button>
             </form>
           </div>
-
-          {/* How Zero-Sum Ledger Works Info */}
-          <div className="glass-panel rounded-3xl p-5 border border-white/10 flex flex-col gap-3">
-            <span className="text-xs font-bold text-white font-headline">How Equilibrium Netting Works:</span>
-            <div className="grid grid-cols-1 gap-2.5 text-xs text-[#a0aec0]">
-              <div className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-[18px] text-[#34d399] shrink-0 mt-0.5">
-                  sync_alt
-                </span>
-                <span className="leading-snug">You and your roommate share a single synchronized ledger.</span>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-[18px] text-[#34d399] shrink-0 mt-0.5">
-                  balance
-                </span>
-                <span className="leading-snug">Expenses cancel out reciprocally — no manual calculations or third-party spreadsheets.</span>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-[18px] text-[#34d399] shrink-0 mt-0.5">
-                  bolt
-                </span>
-                <span className="leading-snug">All changes reflect in real-time across both phones with Cloud Firestore.</span>
-              </div>
-            </div>
-          </div>
         </div>
       ) : (
-        /* Linked Roommate Profile & Stats */
+        /* Linked Roommate: Full Dashboard & Transparent Passbook */
         <div className="flex flex-col gap-4">
-          {/* Roommate Hero Card */}
+          {/* Roommate Hero Identity Card */}
           <div className="glass-panel rounded-3xl p-5 sm:p-6 border border-white/10 shadow-xl flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3.5">
                 <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-[#0566d9] to-[#adc6ff] flex items-center justify-center font-headline font-bold text-xl text-[#002e6a] shadow-lg shadow-[#0566d9]/25">
-                  {user.partnerName ? user.partnerName.charAt(0).toUpperCase() : 'R'}
+                  {partnerName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white font-headline">
-                    {user.partnerName || 'Roommate'}
-                  </h3>
-                  <p className="text-xs text-[#a0aec0]">{user.partnerEmail || 'Paired Roommate'}</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-white font-headline">
+                      {partnerName}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-[#34d399]/15 text-[#34d399] text-[9px] font-bold border border-[#34d399]/25">
+                      Transparent
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#a0aec0]">{partnerEmail}</p>
                 </div>
               </div>
 
@@ -275,9 +378,9 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
                 </span>
                 <span className="text-xs font-semibold text-white mt-0.5 block">
                   {myNetBalance > 0
-                    ? `${user.partnerName} owes you`
+                    ? `${partnerName} owes you`
                     : myNetBalance < 0
-                    ? `You owe ${user.partnerName}`
+                    ? `You owe ${partnerName}`
                     : 'All Settled'}
                 </span>
               </div>
@@ -293,6 +396,214 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
                 {myNetBalance === 0 ? '₹0.00' : formatINR(myNetBalance)}
               </span>
             </div>
+          </div>
+
+          {/* Roommate's Dashboard Metric 1: Liquid Vault Hero Card */}
+          <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-[#121a2d] to-[#0a1120] border border-white/[0.08] shadow-[0_10px_35px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.08)] flex flex-col justify-between">
+            <div className="absolute -right-8 -bottom-8 w-44 h-44 bg-[#adc6ff]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-wider font-headline">
+                {partnerName}'s Liquid Balance
+              </span>
+              <div className="px-3 py-1 rounded-full bg-[#adc6ff]/15 text-[#adc6ff] text-[11px] font-bold flex items-center gap-1.5 border border-[#adc6ff]/25 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#adc6ff] animate-pulse"></span>
+                <span>Roommate Vault</span>
+              </div>
+            </div>
+
+            <div className="text-4xl sm:text-5xl font-black tracking-tight text-white font-headline tabular-nums my-1.5">
+              {formatINR(partnerLiquidBalance)}
+            </div>
+
+            <div className="flex items-center justify-between pt-3.5 mt-2 border-t border-white/[0.06] text-xs text-[#94a3b8]">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[16px] text-[#adc6ff]">
+                  account_balance_wallet
+                </span>
+                <span>
+                  Present Cash
+                  {partnerProfile?.salaryAmount ? ` • ${formatINR(partnerProfile.salaryAmount)}/mo` : ''}
+                </span>
+              </div>
+              <span className="text-[11px] text-[#34d399] font-semibold">
+                Live Synced
+              </span>
+            </div>
+          </div>
+
+          {/* Roommate's Dashboard Metric 2: Monthly Budget Burndown Meter */}
+          <div className="rounded-3xl p-5 bg-[#121a2d]/90 border border-white/[0.08] flex flex-col justify-between shadow-[0_4px_24px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.06)] backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-[#94a3b8] uppercase tracking-wider font-headline">
+                {partnerName}'s Budget Burndown
+              </span>
+              <span
+                className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${
+                  partnerBudgetPercent > 85
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                    : 'bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/25'
+                }`}
+              >
+                {partnerBudgetPercent}% Used
+              </span>
+            </div>
+
+            <div className="text-base font-extrabold text-white font-headline tabular-nums mb-2.5">
+              {formatINR(roommateMonthlySpend)}{' '}
+              <span className="text-xs text-[#94a3b8] font-normal">
+                / {formatINR(partnerBudgetCap)} monthly cap
+              </span>
+            </div>
+
+            {/* Burndown Bar */}
+            <div className="w-full bg-[#1e293b] h-2.5 rounded-full overflow-hidden p-0.5 ring-1 ring-white/[0.05]">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  partnerBudgetPercent > 85
+                    ? 'bg-gradient-to-r from-rose-500 to-amber-500 shadow-[0_0_12px_rgba(244,63,94,0.5)]'
+                    : 'bg-gradient-to-r from-[#0566d9] to-[#adc6ff] shadow-[0_0_12px_rgba(173,198,255,0.5)]'
+                }`}
+                style={{ width: `${partnerBudgetPercent}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Shared Statistics Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="glass-panel rounded-3xl p-4 sm:p-5 border border-white/10 shadow-lg">
+              <span className="text-[11px] text-[#a0aec0] block font-medium mb-1">
+                Total Mutual Spend
+              </span>
+              <span className="text-base sm:text-xl font-bold font-headline text-white tabular-nums">
+                {formatINR(totalMutualSpend)}
+              </span>
+              <span className="text-[10px] text-[#a0aec0] block mt-1">
+                {transactions.filter((t) => !t.isSettlement).length} shared splits
+              </span>
+            </div>
+
+            <div className="glass-panel rounded-3xl p-4 sm:p-5 border border-white/10 shadow-lg">
+              <span className="text-[11px] text-[#a0aec0] block font-medium mb-1">
+                Fronted By {partnerName.split(' ')[0]}
+              </span>
+              <span className="text-base sm:text-xl font-bold font-headline text-[#34d399] tabular-nums">
+                {formatINR(totalFrontedByPartner)}
+              </span>
+              <span className="text-[10px] text-[#a0aec0] block mt-1">
+                vs {formatINR(totalFrontedByMe)} by you
+              </span>
+            </div>
+          </div>
+
+          {/* Roommate's Transparent Passbook Feed Section */}
+          <div className="flex flex-col gap-3 pt-2">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-extrabold text-white font-headline tracking-tight">
+                  {partnerName}'s Passbook
+                </span>
+                <span className="text-xs text-[#94a3b8] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08]">
+                  {filteredRoommateLogs.length}
+                </span>
+              </div>
+
+              {/* Period Filter Tabs */}
+              <div className="bg-[#121a2d] p-1 rounded-xl border border-white/[0.08] flex items-center gap-1">
+                {(['all', 'today', 'week', 'month'] as const).map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => setFilterPeriod(period)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold font-headline capitalize transition-all ${
+                      filterPeriod === period
+                        ? 'bg-[#34d399] text-[#013421]'
+                        : 'text-[#94a3b8] hover:text-white'
+                    }`}
+                  >
+                    {period === 'week' ? 'Week' : period === 'month' ? 'Month' : period}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Roommate Passbook Entries */}
+            {filteredRoommateLogs.length === 0 ? (
+              <div className="glass-panel rounded-3xl p-7 border border-white/10 text-center flex flex-col items-center justify-center gap-2.5">
+                <div className="w-12 h-12 rounded-2xl bg-white/[0.06] flex items-center justify-center text-[#94a3b8]">
+                  <span className="material-symbols-outlined text-[24px]">receipt_long</span>
+                </div>
+                <p className="text-sm font-bold text-white font-headline">No activity logged yet</p>
+                <p className="text-xs text-[#a0aec0] max-w-xs leading-relaxed">
+                  When {partnerName} logs personal or shared expenses, they will stream transparently into this feed in real-time.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {filteredRoommateLogs.map((item) => {
+                  const logDate = new Date(item.timestamp);
+                  const formattedDate = logDate.toLocaleDateString('en-IN', {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+                  const formattedTime = logDate.toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="glass-panel rounded-2xl p-4 border border-white/10 flex items-center justify-between shadow-md hover:border-white/20 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-[#1c263c] text-[#adc6ff] flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[22px]">
+                            {getCategoryIcon(item.category)}
+                          </span>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-white font-headline">
+                              {item.category}
+                            </span>
+                            <span
+                              className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                                item.type === 'settlement'
+                                  ? 'bg-[#10b981]/20 text-[#34d399]'
+                                  : item.type === 'shared_fronted'
+                                  ? 'bg-[#adc6ff]/20 text-[#adc6ff]'
+                                  : 'bg-white/[0.08] text-[#a0aec0]'
+                              }`}
+                            >
+                              {item.type === 'settlement'
+                                ? 'SETTLED'
+                                : item.type === 'shared_fronted'
+                                ? 'SHARED BILL'
+                                : 'PERSONAL'}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-[#a0aec0] mt-0.5">
+                            {item.note || 'No note'} • {formattedDate}, {formattedTime}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-extrabold text-white font-headline tabular-nums">
+                          {formatINR(item.amount)}
+                        </div>
+                        {item.type === 'shared_fronted' && item.splitAmountOther && (
+                          <div className="text-[10px] text-[#34d399]">
+                            Your share: {formatINR(item.splitAmountOther)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Instant Roommate Alerts Quick Pill */}
@@ -326,33 +637,6 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
             </button>
           </div>
 
-          {/* Shared Statistics Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="glass-panel rounded-3xl p-4 sm:p-5 border border-white/10 shadow-lg">
-              <span className="text-[11px] text-[#a0aec0] block font-medium mb-1">
-                Total Mutual Spend
-              </span>
-              <span className="text-base sm:text-xl font-bold font-headline text-white tabular-nums">
-                {formatINR(totalMutualSpend)}
-              </span>
-              <span className="text-[10px] text-[#a0aec0] block mt-1">
-                {transactions.filter((t) => !t.isSettlement).length} shared splits
-              </span>
-            </div>
-
-            <div className="glass-panel rounded-3xl p-4 sm:p-5 border border-white/10 shadow-lg">
-              <span className="text-[11px] text-[#a0aec0] block font-medium mb-1">
-                Fronted By You
-              </span>
-              <span className="text-base sm:text-xl font-bold font-headline text-[#34d399] tabular-nums">
-                {formatINR(totalFrontedByMe)}
-              </span>
-              <span className="text-[10px] text-[#a0aec0] block mt-1">
-                vs {formatINR(totalFrontedByPartner)} by {user.partnerName?.split(' ')[0] || 'Partner'}
-              </span>
-            </div>
-          </div>
-
           {/* Roommate Options / Unlink Button */}
           <div className="pt-2 flex justify-between items-center px-1">
             <div className="text-xs text-[#a0aec0]">
@@ -383,7 +667,7 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
               </h3>
             </div>
             <p className="text-xs text-[#a0aec0] leading-relaxed">
-              Are you sure you want to disconnect from {user.partnerName || 'your roommate'}? You can reconnect anytime by sharing your pair code again.
+              Are you sure you want to disconnect from {partnerName}? You can reconnect anytime by sharing your pair code again.
             </p>
             <div className="flex items-center gap-2.5 pt-2">
               <button

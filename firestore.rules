@@ -52,7 +52,12 @@ service cloud.firestore {
 
       // Personal Logs Subcollection
       match /personal_logs/{logId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isSignedIn() && (
+          isOwner(userId) ||
+          ('partnerUid' in get(/databases/$(database)/documents/users/$(userId)).data &&
+           get(/databases/$(database)/documents/users/$(userId)).data.partnerUid == request.auth.uid)
+        );
+        allow write: if isOwner(userId);
       }
     }
 

@@ -108,6 +108,10 @@ export default function App() {
   // Quick Income Modal State
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState<boolean>(false);
 
+  // Roommate profile and personal logs for transparent dashboard view
+  const [partnerProfile, setPartnerProfile] = useState<UserProfile | null>(null);
+  const [partnerLogs, setPartnerLogs] = useState<PersonalLog[]>([]);
+
   // Track known transaction IDs to alert on newly incoming roommate splits
   const previousTxIdsRef = useRef<Set<string> | null>(null);
 
@@ -246,6 +250,28 @@ export default function App() {
     };
   }, [authUser, userProfile?.partnerUid, userProfile?.partnerEmail]);
 
+  // 5. Listen to Roommate Profile & Personal Logs for complete dashboard transparency
+  useEffect(() => {
+    if (!userProfile?.partnerUid) {
+      setPartnerProfile(null);
+      setPartnerLogs([]);
+      return;
+    }
+
+    const unsubPartnerProfile = listenToUserProfile(userProfile.partnerUid, (prof) => {
+      setPartnerProfile(prof);
+    });
+
+    const unsubPartnerLogs = listenToPersonalLogs(userProfile.partnerUid, (logs) => {
+      setPartnerLogs(logs);
+    });
+
+    return () => {
+      unsubPartnerProfile();
+      unsubPartnerLogs();
+    };
+  }, [userProfile?.partnerUid]);
+
   // Loading Screen (only if we truly have no auth data yet)
   if (authLoading && !authUser && !userProfile) {
     return (
@@ -327,6 +353,8 @@ export default function App() {
         {currentTab === 'partner-view' && (
           <PartnerView
             user={userProfile}
+            partnerProfile={partnerProfile}
+            partnerLogs={partnerLogs}
             ledger={sharedLedger}
             transactions={sharedTransactions}
           />
