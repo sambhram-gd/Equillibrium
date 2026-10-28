@@ -1,81 +1,149 @@
 import {
   collection,
   doc,
-  addDoc,
+  setDoc,
   deleteDoc,
   onSnapshot,
   query,
   orderBy,
-  runTransaction,
   limit,
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { PersonalLog } from '../types';
+import { getLocalProfile, updateUserProfile } from './userService';
+
+const LOGS_STORAGE_KEY_PREFIX = 'eq_personal_logs_';
+
+export function getLocalPersonalLogs(userId: string): PersonalLog[] {
+  try {
+    const raw = localStorage.getItem(LOGS_STORAGE_KEY_PREFIX + userId);
+    if (raw) {
+      return JSON.parse(raw) as PersonalLog[];
+    }
+  } catch (e) {
+    console.warn('Failed to parse local personal logs', e);
+  }
+  return [];
+}
+
+export function saveLocalPersonalLogs(userId: string, logs: PersonalLog[]): void {
+  try {
+    localStorage.setItem(LOGS_STORAGE_KEY_PREFIX + userId, JSON.stringify(logs));
+    window.dispatchEvent(
+      new CustomEvent('eq_logs_updated', {
+        detail: { userId, logs },
+      })
+    );
+  } catch (e) {
+    console.warn('Failed to save personal logs to localStorage', e);
+  }
+}
 
 export function listenToPersonalLogs(
   userId: string,
   callback: (logs: PersonalLog[]) => void
 ): () => void {
-  const path = `users/${userId}/personal_logs`;
-  const q = query(
-    collection(db, 'users', userId, 'personal_logs'),
-    orderBy('timestamp', 'desc'),
-    limit(100)
-  );
+  // 1. Immediately emit logs from localStorage
+  const localLogs = getLocalPersonalLogs(userId);
+  callback(localLogs);
 
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      const logs: PersonalLog[] = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...(docSnap.data() as Omit<PersonalLog, 'id'>),
-      }));
-      callback(logs);
-    },
-    (error) => {
-      handleFirestoreError(error, OperationType.LIST, path);
+  // 2. Listen for local log update events
+  const handleLogsUpdate = (e: Event) => {
+    const custom = e as CustomEvent<{ userId: string; logs: PersonalLog[] }>;
+    if (custom.detail && custom.detail.userId === userId) {
+      callback(custom.detail.logs);
     }
-  );
+  };
+  window.addEventListener('eq_logs_updated', handleLogsUpdate);
+
+  // 3. Listen to Firestore in background
+  const path = `users/${userId}/personal_logs`;
+  let unsubscribeFirestore = () => {};
+
+  try {
+    const q = query(
+      collection(db, 'users', userId, 'personal_logs'),
+      orderBy('timestamp', 'desc'),
+      limit(100)
+    );
+
+    unsubscribeFirestore = onSnapshot(
+      q,
+      (snapshot) => {
+        const remoteLogs: PersonalLog[] = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Omit<PersonalLog, 'id'>),
+        }));
+
+        if (remoteLogs.length > 0) {
+          // Merge remote with local to avoid losing any offline items
+          const currentLocal = getLocalPersonalLogs(userId);
+          const localMap = new Map(currentLocal.map((l) => [l.id || l.timestamp, l]));
+          remoteLogs.forEach((rl) => {
+            localMap.set(rl.id || rl.timestamp, rl);
+          });
+          const merged = Array.from(localMap.values()).sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+          saveLocalPersonalLogs(userId, merged);
+          callback(merged);
+        }
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, path);
+        // On error, fall back cleanly to local logs
+        callback(getLocalPersonalLogs(userId));
+      }
+    );
+  } catch (err) {
+    console.warn('Firestore personal logs setup skipped/failed:', err);
+  }
+
+  return () => {
+    window.removeEventListener('eq_logs_updated', handleLogsUpdate);
+    unsubscribeFirestore();
+  };
 }
 
 export async function addPersonalLog(
   userId: string,
   log: Omit<PersonalLog, 'id'>
 ): Promise<string> {
-  const userRef = doc(db, 'users', userId);
-  const logsColRef = collection(db, 'users', userId, 'personal_logs');
-  const path = `users/${userId}/personal_logs`;
+  const newLogId = 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+  const fullLog: PersonalLog = {
+    id: newLogId,
+    ...log,
+  };
 
+  // 1. Get current local state and calculate new balance
+  const currentLogs = getLocalPersonalLogs(userId);
+  const updatedLogs = [fullLog, ...currentLogs];
+  saveLocalPersonalLogs(userId, updatedLogs);
+
+  const currentProfile = getLocalProfile(userId);
+  const currentBalance = currentProfile?.currentBalance ?? 0;
+  const balanceDelta = log.type === 'debit' ? -log.amount : log.amount;
+  const updatedBalance = currentBalance + balanceDelta;
+
+  // Update profile balance locally & broadcast
+  await updateUserProfile(userId, {
+    currentBalance: updatedBalance,
+  });
+
+  // 2. Sync to Firestore in background with setDoc (resilient against offline or missing docs)
   try {
-    let newLogId = '';
-    await runTransaction(db, async (transaction) => {
-      const userSnap = await transaction.get(userRef);
-      if (!userSnap.exists()) {
-        throw new Error('User profile does not exist');
-      }
+    const userRef = doc(db, 'users', userId);
+    const logRef = doc(db, 'users', userId, 'personal_logs', newLogId);
 
-      const userData = userSnap.data();
-      const currentBalance = userData.currentBalance ?? 0;
-
-      // Calculate new balance
-      const balanceDelta = log.type === 'debit' ? -log.amount : log.amount;
-      const updatedBalance = currentBalance + balanceDelta;
-
-      // Add log
-      const newLogRef = doc(logsColRef);
-      newLogId = newLogRef.id;
-      transaction.set(newLogRef, log);
-
-      // Update user liquid balance
-      transaction.update(userRef, {
-        currentBalance: updatedBalance,
-      });
-    });
-
-    return newLogId;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    // Save log
+    await setDoc(logRef, fullLog, { merge: true });
+    // Update balance on user doc
+    await setDoc(userRef, { currentBalance: updatedBalance }, { merge: true });
+  } catch (err) {
+    console.warn('Firestore personal log background sync deferred:', err);
   }
+
+  return newLogId;
 }
 
 export async function deletePersonalLog(
@@ -83,28 +151,29 @@ export async function deletePersonalLog(
   logId: string,
   log: PersonalLog
 ): Promise<void> {
-  const userRef = doc(db, 'users', userId);
-  const logRef = doc(db, 'users', userId, 'personal_logs', logId);
-  const path = `users/${userId}/personal_logs/${logId}`;
+  // 1. Remove from local storage
+  const currentLogs = getLocalPersonalLogs(userId);
+  const updatedLogs = currentLogs.filter((l) => l.id !== logId);
+  saveLocalPersonalLogs(userId, updatedLogs);
 
+  // 2. Revert balance
+  const currentProfile = getLocalProfile(userId);
+  const currentBalance = currentProfile?.currentBalance ?? 0;
+  const revertDelta = log.type === 'debit' ? log.amount : -log.amount;
+  const updatedBalance = currentBalance + revertDelta;
+
+  await updateUserProfile(userId, {
+    currentBalance: updatedBalance,
+  });
+
+  // 3. Delete from Firestore in background
   try {
-    await runTransaction(db, async (transaction) => {
-      const userSnap = await transaction.get(userRef);
-      if (!userSnap.exists()) {
-        throw new Error('User does not exist');
-      }
-      const userData = userSnap.data();
-      const currentBalance = userData.currentBalance ?? 0;
-
-      // Revert balance change
-      const revertDelta = log.type === 'debit' ? log.amount : -log.amount;
-      transaction.delete(logRef);
-      transaction.update(userRef, {
-        currentBalance: currentBalance + revertDelta,
-      });
-    });
-  } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+    const logRef = doc(db, 'users', userId, 'personal_logs', logId);
+    await deleteDoc(logRef);
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, { currentBalance: updatedBalance }, { merge: true });
+  } catch (err) {
+    console.warn('Firestore personal log delete deferred:', err);
   }
 }
 

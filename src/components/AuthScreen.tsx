@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { loginWithGoogle } from '../firebase';
 
-export const AuthScreen: React.FC = () => {
+interface AuthScreenProps {
+  onGuestLogin?: () => void;
+}
+
+export const AuthScreen: React.FC<AuthScreenProps> = ({ onGuestLogin }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,6 +20,23 @@ export const AuthScreen: React.FC = () => {
       setError(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGuestAccess = () => {
+    const guestUser = {
+      uid: 'guest_' + Math.random().toString(36).substring(2, 9),
+      displayName: 'Equilibrium User',
+      email: 'user@equilibrium.local',
+    };
+    try {
+      localStorage.setItem('eq_guest_user', JSON.stringify(guestUser));
+      window.dispatchEvent(new CustomEvent('eq_auth_changed'));
+    } catch (e) {
+      console.warn('Failed to save guest user', e);
+    }
+    if (onGuestLogin) {
+      onGuestLogin();
     }
   };
 
@@ -120,8 +141,17 @@ export const AuthScreen: React.FC = () => {
           <span>{loading ? 'Authenticating...' : 'Sign in with Google'}</span>
         </button>
 
+        <button
+          onClick={handleGuestAccess}
+          type="button"
+          className="w-full py-3 bg-[#171f33] hover:bg-[#222a3d] border border-[#2d3449] text-[#dae2fd] rounded-2xl font-headline font-semibold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+        >
+          <span className="material-symbols-outlined text-[16px] text-[#4edea3]">bolt</span>
+          <span>Quick Access (Offline / Local Mode)</span>
+        </button>
+
         <p className="text-[10px] text-center text-[#bbcabf]">
-          Zero passwords • Direct Google Sign-In with Cloud Firestore
+          Zero passwords • Instant auto-saving in browser & Cloud Firestore
         </p>
       </div>
     </div>

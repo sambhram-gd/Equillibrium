@@ -4,7 +4,12 @@ import { UserProfile } from '../types';
 import { createUserProfile, generatePairCode, pairWithRoommate } from '../services/userService';
 
 interface OnboardingModalProps {
-  authUser: User;
+  authUser: {
+    uid: string;
+    displayName: string | null;
+    email: string | null;
+    photoURL?: string | null;
+  };
   onComplete: (profile: UserProfile) => void;
 }
 
