@@ -55,6 +55,7 @@ export interface SharedTransaction {
   description: string;
   timestamp: string;
   isSettlement?: boolean;
+  isPersonal?: boolean;
 }
 
 export interface PairingCodeDoc {

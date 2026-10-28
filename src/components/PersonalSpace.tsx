@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { UserProfile, PersonalLog, PersonalLogCategory } from '../types';
+import { UserProfile, PersonalLog, PersonalLogCategory, SharedTransaction } from '../types';
 import {
   addPersonalLog,
   deletePersonalLog,
   filterLogsByPeriod,
   calculateMonthlySpend,
 } from '../services/personalLogService';
+import {
+  addSharedTransaction,
+  deleteSharedTransaction,
+  getLedgerId,
+} from '../services/sharedLedgerService';
 import { DailyExpenseChart } from './DailyExpenseChart';
 
 interface PersonalSpaceProps {
   user: UserProfile;
   logs: PersonalLog[];
+  transactions?: SharedTransaction[];
   onOpenIncomeModal: () => void;
 }
 
@@ -29,6 +35,7 @@ const CATEGORIES: { name: PersonalLogCategory; icon: string }[] = [
 export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
   user,
   logs,
+  transactions = [],
   onOpenIncomeModal,
 }) => {
   const [logMode, setLogMode] = useState<'slider' | 'numpad'>('slider');
@@ -172,6 +179,30 @@ export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
         note: note.trim() || undefined,
       });
 
+      // Stream to shared ledger so roommate's Roommate passbook receives it in real-time!
+      if (user.partnerUid || user.partnerEmail) {
+        try {
+          const lid = getLedgerId(user.uid, user.partnerUid, user.email, user.partnerEmail);
+          const members: [string, string] = [user.uid, user.partnerUid || 'partner_rm'];
+          await addSharedTransaction(
+            lid,
+            {
+              paidBy: user.uid,
+              paidByName: user.displayName || 'Roommate',
+              totalAmount: amount,
+              splitAmountOther: 0,
+              category: selectedCategory,
+              description: note.trim() || selectedCategory,
+              timestamp: logDate.toISOString(),
+              isPersonal: true,
+            },
+            members
+          );
+        } catch (syncErr) {
+          console.warn('Real-time roommate stream deferred:', syncErr);
+        }
+      }
+
       showToast(`Logged ${formatINR(amount)} for ${selectedCategory} (${formatDisplayDate(selectedDate)})`);
       setAmount(0);
       setNote('');
@@ -188,6 +219,18 @@ export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
     if (!log.id) return;
     try {
       await deletePersonalLog(user.uid, log.id, log);
+
+      // Also revert from shared ledger so roommate passbook syncs deletion
+      if ((user.partnerUid || user.partnerEmail) && transactions.length > 0) {
+        const lid = getLedgerId(user.uid, user.partnerUid, user.email, user.partnerEmail);
+        const match = transactions.find(
+          (t) => t.isPersonal && t.paidBy === user.uid && t.totalAmount === log.amount && t.timestamp === log.timestamp
+        );
+        if (match?.id) {
+          await deleteSharedTransaction(lid, match.id);
+        }
+      }
+
       showToast(`Reverted ${formatINR(log.amount)}`);
     } catch (err) {
       console.error('Failed to delete log', err);

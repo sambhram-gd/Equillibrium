@@ -72,6 +72,11 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
     return '₹' + Math.abs(Math.round(val)).toLocaleString('en-IN');
   };
 
+  // Filter for Screen 2: Only show shared splits and settlements with debt impact
+  const sharedSplits = transactions.filter(
+    (tx) => tx.isSettlement || (!tx.isPersonal && tx.splitAmountOther > 0)
+  );
+
   // Compute other person's owe amount
   const parsedTotal = parseFloat(totalAmount) || 0;
   let otherOweAmount = 0;
@@ -363,13 +368,13 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
               Shared Activity Stream
             </span>
             <span className="text-[10px] bg-[#121a2d] px-2 py-0.5 rounded-full text-[#34d399] font-mono border border-white/10">
-              {transactions.length}
+              {sharedSplits.length}
             </span>
           </div>
           <span className="text-[11px] text-[#a0aec0]">Real-time Netting</span>
         </div>
 
-        {transactions.length === 0 ? (
+        {sharedSplits.length === 0 ? (
           <div className="glass-panel rounded-3xl p-8 border border-white/10 text-center flex flex-col items-center justify-center gap-3">
             <div className="w-14 h-14 rounded-2xl bg-[#1c263c] flex items-center justify-center text-[#a0aec0] shadow-inner">
               <span className="material-symbols-outlined text-[28px]">
@@ -383,7 +388,7 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {transactions.map((tx) => {
+            {sharedSplits.map((tx) => {
               const isSettlement = tx.isSettlement;
               const isMePayer = tx.paidBy === user.uid;
               const txDate = new Date(tx.timestamp);

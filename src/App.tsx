@@ -21,6 +21,7 @@ import {
   listenToSharedTransactions,
   getLocalLedger,
   getLocalTransactions,
+  addSharedTransaction,
 } from './services/sharedLedgerService';
 import { notifyRoommateActivity } from './services/notificationService';
 
@@ -272,6 +273,54 @@ export default function App() {
     };
   }, [userProfile?.partnerUid]);
 
+  // 6. Automatically sync any local personal logs to shared ledger for complete roommate transparency
+  useEffect(() => {
+    if (!userProfile?.partnerUid && !userProfile?.partnerEmail) return;
+    if (personalLogs.length === 0) return;
+
+    const lid = getLedgerId(
+      userProfile.uid,
+      userProfile.partnerUid,
+      userProfile.email,
+      userProfile.partnerEmail
+    );
+
+    const existingKeys = new Set(
+      sharedTransactions.map((t) => `${t.timestamp}_${t.totalAmount}_${t.category}`)
+    );
+
+    const unsynced = personalLogs.filter((log) => {
+      if (log.type !== 'debit') return false;
+      const key = `${log.timestamp}_${log.amount}_${log.category}`;
+      return !existingKeys.has(key);
+    });
+
+    if (unsynced.length === 0) return;
+
+    const members: [string, string] = [userProfile.uid, userProfile.partnerUid || 'partner_rm'];
+
+    unsynced.forEach(async (log) => {
+      try {
+        await addSharedTransaction(
+          lid,
+          {
+            paidBy: userProfile.uid,
+            paidByName: userProfile.displayName || 'Roommate',
+            totalAmount: log.amount,
+            splitAmountOther: 0,
+            category: log.category,
+            description: log.note || log.category,
+            timestamp: log.timestamp,
+            isPersonal: true,
+          },
+          members
+        );
+      } catch (err) {
+        console.warn('Sync existing log notice:', err);
+      }
+    });
+  }, [userProfile?.partnerUid, userProfile?.partnerEmail, personalLogs.length, sharedTransactions.length]);
+
   // Loading Screen (only if we truly have no auth data yet)
   if (authLoading && !authUser && !userProfile) {
     return (
@@ -337,6 +386,7 @@ export default function App() {
           <PersonalSpace
             user={userProfile}
             logs={personalLogs}
+            transactions={sharedTransactions}
             onOpenIncomeModal={() => setIsIncomeModalOpen(true)}
           />
         )}

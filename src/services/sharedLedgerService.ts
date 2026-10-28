@@ -304,3 +304,40 @@ export async function settleUpLedger(
 }
 
 export const settleSharedLedger = settleUpLedger;
+
+export async function deleteSharedTransaction(
+  ledgerId: string,
+  transactionId: string
+): Promise<void> {
+  const currentTxs = getLocalTransactions(ledgerId);
+  const target = currentTxs.find((t) => t.id === transactionId);
+  const updatedTxs = currentTxs.filter((t) => t.id !== transactionId);
+  saveLocalTransactions(ledgerId, updatedTxs);
+
+  // If it was a split with debt impact, revert the netBalance
+  if (target && target.splitAmountOther > 0) {
+    const currentLedger = getLocalLedger(ledgerId);
+    if (currentLedger) {
+      const isUser1Payer =
+        target.paidBy === currentLedger.user1 ||
+        (currentLedger.user1Name && target.paidByName === currentLedger.user1Name);
+      const balanceDelta = isUser1Payer
+        ? -target.splitAmountOther
+        : target.splitAmountOther;
+      const newNetBalance = (currentLedger.netBalance || 0) + balanceDelta;
+      saveLocalLedger({ ...currentLedger, netBalance: newNetBalance });
+
+      try {
+        await setDoc(doc(db, 'shared_ledgers', ledgerId), { netBalance: newNetBalance }, { merge: true });
+      } catch (err) {
+        console.warn('Reverting ledger balance deferred:', err);
+      }
+    }
+  }
+
+  try {
+    await deleteDoc(doc(db, 'shared_ledgers', ledgerId, 'transactions', transactionId));
+  } catch (err) {
+    console.warn('Firestore transaction delete deferred:', err);
+  }
+}
