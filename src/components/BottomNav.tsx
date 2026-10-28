@@ -23,53 +23,53 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       label: 'Shared Ledger',
       icon: 'receipt_long',
       hasBadge: sharedLedgerBalance !== undefined && sharedLedgerBalance !== 0,
-      badgeColor: sharedLedgerBalance && sharedLedgerBalance > 0 ? 'bg-[#4edea3]' : 'bg-[#ffb4ab]',
+      badgeColor: sharedLedgerBalance && sharedLedgerBalance > 0 ? 'bg-[#34d399]' : 'bg-[#fb7185]',
     },
     {
       id: 'partner-view' as TabType,
-      label: 'Partner',
+      label: 'Roommate',
       icon: 'group',
     },
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#0b1326]/95 backdrop-blur-xl border-t border-[#171f33] pb-safe shadow-lg">
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-4">
+    <nav className="fixed bottom-safe inset-x-0 z-40 px-3 pointer-events-none">
+      <div className="max-w-sm mx-auto pointer-events-auto rounded-full bg-[#0e1629]/90 backdrop-blur-2xl border border-white/[0.12] shadow-[0_12px_40px_rgba(0,0,0,0.7)] p-1.5 flex items-center justify-between">
         {tabs.map((tab) => {
           const isActive = currentTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => onChangeTab(tab.id)}
-              className={`relative flex flex-col items-center justify-center gap-1 w-24 h-14 rounded-xl transition-all duration-200 active:scale-95 ${
+              className={`relative flex-1 py-2 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-95 select-none ${
                 isActive
-                  ? 'text-[#4edea3] font-semibold'
-                  : 'text-[#bbcabf] hover:text-[#dae2fd]'
+                  ? 'bg-white/[0.09] text-[#34d399] font-bold shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)] border border-white/[0.06]'
+                  : 'text-[#94a3b8] hover:text-[#dae2fd]'
               }`}
             >
-              {/* Active ambient glow bar on top */}
-              {isActive && (
-                <span className="absolute -top-[1px] w-8 h-[2px] bg-[#4edea3] rounded-full shadow-[0_0_8px_#4edea3]" />
-              )}
-
-              <div className="relative">
+              <div className="relative flex items-center justify-center">
                 <span
-                  className={`material-symbols-outlined text-[24px] transition-transform ${
-                    isActive ? 'scale-110 font-bold' : ''
+                  className={`material-symbols-outlined text-[22px] transition-transform duration-200 ${
+                    isActive ? 'scale-110 text-[#34d399]' : ''
                   }`}
+                  style={{
+                    fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0",
+                  }}
                 >
                   {tab.icon}
                 </span>
 
-                {/* Badge if active shared balance */}
+                {/* Live Bilateral Debt/Credit Notification Badge */}
                 {tab.hasBadge && (
                   <span
-                    className={`absolute -top-0.5 -right-1 w-2 h-2 rounded-full ${tab.badgeColor} ring-2 ring-[#0b1326]`}
+                    className={`absolute -top-0.5 -right-1 w-2 h-2 rounded-full ${tab.badgeColor} ring-2 ring-[#0e1629] animate-pulse`}
                   />
                 )}
               </div>
 
-              <span className="text-[11px] tracking-tight">{tab.label}</span>
+              <span className="text-[10px] tracking-tight font-headline">
+                {tab.label}
+              </span>
             </button>
           );
         })}

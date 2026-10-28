@@ -169,9 +169,6 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Determine who is paying whom
-      // If userNetBalance < 0: current user owes partner -> payer is current user
-      // If userNetBalance > 0: partner owes current user -> partner is marked as paying current user
       const amountToClear = Math.abs(userNetBalance);
       const payerUid = userNetBalance < 0 ? user.uid : (user.partnerUid || '');
       const payerName = userNetBalance < 0 ? user.displayName : partnerName;
@@ -184,7 +181,7 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#4edea3', '#10b981', '#adc6ff', '#ffffff'],
+          colors: ['#34d399', '#10b981', '#adc6ff', '#ffffff'],
         });
       } catch {
         // ignore confetti failures
@@ -203,38 +200,38 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
   // If no partner linked
   if (!user.partnerUid) {
     return (
-      <div className="flex flex-col gap-6 py-8 items-center text-center px-2">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#171f33] to-[#222a3d] border border-[#2d3449] flex items-center justify-center shadow-lg">
-          <span className="material-symbols-outlined text-[36px] text-[#4edea3]">
+      <div className="flex flex-col gap-6 py-6 items-center text-center px-2">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#121a2d] to-[#1c263c] border border-white/10 flex items-center justify-center shadow-xl shadow-black/40">
+          <span className="material-symbols-outlined text-[36px] text-[#34d399]">
             group_add
           </span>
         </div>
 
         <div className="flex flex-col gap-2 max-w-sm">
-          <h2 className="text-xl font-bold font-headline text-[#dae2fd]">
+          <h2 className="text-xl font-bold font-headline text-white tracking-tight">
             Connect Your Roommate
           </h2>
-          <p className="text-xs text-[#bbcabf] leading-relaxed">
+          <p className="text-xs text-[#a0aec0] leading-relaxed">
             Equilibrium runs a bilateral zero-sum netting engine. Once paired, any shared groceries, rent, or utilities automatically offset against each other into a single live balance.
           </p>
         </div>
 
-        <div className="p-4 bg-[#171f33] rounded-2xl border border-[#2d3449] w-full max-w-sm flex flex-col gap-3">
-          <div className="text-[11px] text-[#bbcabf] uppercase font-semibold tracking-wider">
-            Your Pair Code
+        <div className="p-5 glass-panel rounded-3xl w-full max-w-sm flex flex-col gap-3.5 shadow-xl">
+          <div className="text-[11px] text-[#a0aec0] uppercase font-semibold tracking-wider">
+            Your Roommate Invite Code
           </div>
-          <div className="font-mono text-xl font-bold text-[#4edea3] tracking-wider bg-[#0b1326] py-2.5 rounded-xl border border-[#2d3449]">
+          <div className="font-mono text-2xl font-extrabold text-[#34d399] tracking-widest bg-[#070c18] py-3 rounded-2xl border border-white/10 shadow-inner">
             {user.pairCode || 'EQ-NONE'}
           </div>
-          <p className="text-[11px] text-[#bbcabf]">
+          <p className="text-[11px] text-[#a0aec0]">
             Share this code with your roommate or enter theirs in the Partner tab.
           </p>
           <button
             onClick={onNavigateToPartner}
-            className="w-full py-3 bg-[#4edea3] hover:bg-[#6ffbbe] text-[#003824] rounded-xl font-headline font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#4edea3]/20"
+            className="w-full py-3.5 bg-gradient-to-r from-[#10b981] to-[#34d399] hover:brightness-110 text-[#013421] rounded-2xl font-headline font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-[#10b981]/25"
           >
             <span>Open Roommate Pairing</span>
-            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+            <span className="material-symbols-outlined text-[16px] font-bold">arrow_forward</span>
           </button>
         </div>
       </div>
@@ -245,84 +242,98 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
     <div className="flex flex-col gap-5 pb-6">
       {/* Toast Alert */}
       {toastMsg && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-[#171f33] border border-[#4edea3] text-[#4edea3] text-xs font-semibold rounded-full shadow-lg flex items-center gap-2 animate-in fade-in duration-200">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-[#121a2d]/95 backdrop-blur-md border border-[#34d399]/40 text-[#34d399] text-xs font-semibold rounded-full shadow-2xl flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200">
           <span className="material-symbols-outlined text-[16px]">check_circle</span>
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* Screen 3 Header: Cumulative Settlement Headline */}
-      <div className="relative overflow-hidden rounded-2xl p-5 border shadow-sm flex flex-col gap-4 bg-gradient-to-br from-[#171f33] to-[#131b2e] border-[#2d3449]">
+      {/* Cumulative Settlement Headline Card */}
+      <div className="relative overflow-hidden rounded-3xl p-5 border shadow-2xl flex flex-col gap-4 bg-gradient-to-br from-[#121a2d] to-[#0c1424] border-white/10">
         {/* Ambient Glow */}
         <div
-          className={`absolute -right-8 -bottom-8 w-40 h-40 rounded-full blur-3xl pointer-events-none ${
+          className={`absolute -right-8 -bottom-8 w-44 h-44 rounded-full blur-3xl pointer-events-none transition-all duration-700 ${
             userNetBalance > 0
-              ? 'bg-[#4edea3]/15'
+              ? 'bg-[#10b981]/20'
               : userNetBalance < 0
-              ? 'bg-[#ffb4ab]/15'
-              : 'bg-[#adc6ff]/10'
+              ? 'bg-[#fb7185]/20'
+              : 'bg-[#adc6ff]/15'
           }`}
         />
 
+        {/* Card Header */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-[#bbcabf] uppercase tracking-wider">
-            Bilateral Zero-Sum Netting
-          </span>
-          <span className="px-2.5 py-0.5 rounded-full bg-[#0b1326] text-[#bbcabf] text-[11px] border border-[#2d3449]">
-            Partner: <strong className="text-[#dae2fd]">{partnerName}</strong>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#34d399] animate-pulse"></span>
+            <span className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider">
+              Bilateral Zero-Sum Netting
+            </span>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-[#070c18] text-[#dae2fd] text-[11px] font-medium border border-white/10 flex items-center gap-1.5 shadow-sm">
+            <span className="text-[#a0aec0]">Partner:</span>
+            <strong className="text-white font-semibold">{partnerName}</strong>
           </span>
         </div>
 
         {/* Dynamic Balance Headline Banner */}
         <div className="py-2">
           {userNetBalance > 0 && (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#4edea3]">
-                <span className="material-symbols-outlined text-[18px]">
+            <div className="flex flex-col gap-1.5">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#10b981]/15 text-[#34d399] text-xs font-bold w-fit border border-[#10b981]/30">
+                <span className="material-symbols-outlined text-[16px]">
                   arrow_upward_alt
                 </span>
                 <span>You are owed</span>
               </div>
-              <div className="text-3xl sm:text-4xl font-extrabold text-[#4edea3] font-headline tabular-nums tracking-tight">
+              <div className="text-3xl sm:text-4xl font-extrabold text-[#34d399] font-headline tabular-nums tracking-tight">
                 {partnerName} owes you {formatINR(userNetBalance)}
               </div>
+              <p className="text-[11px] text-[#a0aec0]">
+                Reciprocally computed from all shared bills and settlements.
+              </p>
             </div>
           )}
 
           {userNetBalance < 0 && (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#ffb4ab]">
-                <span className="material-symbols-outlined text-[18px]">
+            <div className="flex flex-col gap-1.5">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#fb7185]/15 text-[#fb7185] text-xs font-bold w-fit border border-[#fb7185]/30">
+                <span className="material-symbols-outlined text-[16px]">
                   arrow_downward_alt
                 </span>
                 <span>Outstanding Debt</span>
               </div>
-              <div className="text-3xl sm:text-4xl font-extrabold text-[#ffb4ab] font-headline tabular-nums tracking-tight">
+              <div className="text-3xl sm:text-4xl font-extrabold text-[#fb7185] font-headline tabular-nums tracking-tight">
                 You owe {partnerName} {formatINR(userNetBalance)}
               </div>
+              <p className="text-[11px] text-[#a0aec0]">
+                Tap Settle Up once you send the payment via UPI or cash.
+              </p>
             </div>
           )}
 
           {userNetBalance === 0 && (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#4edea3]">
-                <span className="material-symbols-outlined text-[18px]">
+            <div className="flex flex-col gap-1.5">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#10b981]/15 text-[#34d399] text-xs font-bold w-fit border border-[#10b981]/30">
+                <span className="material-symbols-outlined text-[16px]">
                   check_circle
                 </span>
                 <span>Perfect Equilibrium</span>
               </div>
-              <div className="text-3xl sm:text-4xl font-extrabold text-[#dae2fd] font-headline tabular-nums tracking-tight">
+              <div className="text-3xl sm:text-4xl font-extrabold text-white font-headline tabular-nums tracking-tight">
                 All Settled Up (₹0.00)
               </div>
+              <p className="text-[11px] text-[#a0aec0]">
+                All mutual expenses between you and {partnerName} are balanced.
+              </p>
             </div>
           )}
         </div>
 
         {/* Action Buttons Row: Log Split & Settle Up */}
-        <div className="flex items-center gap-2 pt-2 border-t border-[#2d3449]/50">
+        <div className="flex items-center gap-2.5 pt-3 border-t border-white/10">
           <button
             onClick={handleOpenAddModal}
-            className="flex-1 py-3 bg-[#4edea3] hover:bg-[#6ffbbe] text-[#003824] rounded-xl font-headline font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
+            className="flex-1 py-3.5 bg-gradient-to-r from-[#10b981] to-[#34d399] hover:brightness-110 text-[#013421] rounded-2xl font-headline font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-[#10b981]/25"
           >
             <span className="material-symbols-outlined text-[18px] font-bold">
               call_split
@@ -333,9 +344,9 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
           {userNetBalance !== 0 && (
             <button
               onClick={() => setShowSettleModal(true)}
-              className="px-4 py-3 bg-[#222a3d] hover:bg-[#2d3449] text-[#dae2fd] border border-[#3c4a42] rounded-xl font-headline font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+              className="px-5 py-3.5 bg-[#1c263c] hover:bg-[#26334f] text-white border border-white/10 rounded-2xl font-headline font-semibold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md"
             >
-              <span className="material-symbols-outlined text-[18px] text-[#ffb95f]">
+              <span className="material-symbols-outlined text-[18px] text-[#fbbf24]">
                 handshake
               </span>
               <span>Settle Up</span>
@@ -344,34 +355,34 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
         </div>
       </div>
 
-      {/* Shared Ledger Feed */}
+      {/* Shared Activity Stream */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-[#dae2fd] font-headline">
+            <span className="text-xs font-bold text-[#a0aec0] uppercase tracking-wider font-headline">
               Shared Activity Stream
             </span>
-            <span className="text-xs text-[#bbcabf] font-mono">
-              ({transactions.length})
+            <span className="text-[10px] bg-[#121a2d] px-2 py-0.5 rounded-full text-[#34d399] font-mono border border-white/10">
+              {transactions.length}
             </span>
           </div>
-          <span className="text-[11px] text-[#bbcabf]">Real-time Netting</span>
+          <span className="text-[11px] text-[#a0aec0]">Real-time Netting</span>
         </div>
 
         {transactions.length === 0 ? (
-          <div className="bg-[#171f33] rounded-2xl p-8 border border-[#2d3449]/70 text-center flex flex-col items-center justify-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-[#222a3d] flex items-center justify-center text-[#bbcabf]">
-              <span className="material-symbols-outlined text-[24px]">
-                receipt
+          <div className="glass-panel rounded-3xl p-8 border border-white/10 text-center flex flex-col items-center justify-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-[#1c263c] flex items-center justify-center text-[#a0aec0] shadow-inner">
+              <span className="material-symbols-outlined text-[28px]">
+                receipt_long
               </span>
             </div>
-            <p className="text-sm font-medium text-[#dae2fd]">No shared splits yet</p>
-            <p className="text-xs text-[#bbcabf] max-w-xs">
-              Tap "Split Expense" above whenever you or {partnerName} front money for groceries, food delivery, or bills.
+            <p className="text-sm font-bold text-white font-headline">No shared splits yet</p>
+            <p className="text-xs text-[#a0aec0] max-w-xs leading-relaxed">
+              Tap "Split Expense" above whenever you or {partnerName} front money for groceries, food delivery, or utilities.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             {transactions.map((tx) => {
               const isSettlement = tx.isSettlement;
               const isMePayer = tx.paidBy === user.uid;
@@ -388,36 +399,36 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
               return (
                 <div
                   key={tx.id}
-                  className={`rounded-xl p-3.5 border transition-colors shadow-sm flex items-center justify-between ${
+                  className={`rounded-2xl p-4 border transition-all duration-200 shadow-md flex items-center justify-between ${
                     isSettlement
-                      ? 'bg-[#10b981]/10 border-[#10b981]/40'
-                      : 'bg-[#171f33] hover:bg-[#1b253d] border-[#2d3449]/60'
+                      ? 'bg-[#10b981]/10 border-[#10b981]/30'
+                      : 'glass-panel hover:border-white/20'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3.5">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
                         isSettlement
-                          ? 'bg-[#10b981]/25 text-[#4edea3]'
-                          : 'bg-[#222a3d] text-[#adc6ff]'
+                          ? 'bg-[#10b981]/25 text-[#34d399]'
+                          : 'bg-[#1c263c] text-[#adc6ff]'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[20px]">
+                      <span className="material-symbols-outlined text-[22px]">
                         {isSettlement ? 'check_circle' : 'receipt_long'}
                       </span>
                     </div>
 
                     <div>
-                      <div className="text-xs font-semibold text-[#dae2fd] flex items-center gap-1.5">
+                      <div className="text-xs font-semibold text-white flex items-center gap-1.5">
                         <span>{tx.description || tx.category}</span>
                         {isSettlement && (
-                          <span className="px-1.5 py-0.5 rounded bg-[#4edea3]/20 text-[#4edea3] text-[9px] font-bold">
+                          <span className="px-1.5 py-0.5 rounded bg-[#34d399]/20 text-[#34d399] text-[9px] font-bold">
                             SETTLED
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-[#bbcabf] mt-0.5">
-                        <strong className="text-[#dae2fd]">
+                      <div className="text-[11px] text-[#a0aec0] mt-0.5">
+                        <strong className="text-white font-medium">
                           {isMePayer ? 'You' : tx.paidByName}
                         </strong>{' '}
                         paid {formatINR(tx.totalAmount)} • {formattedDate}, {formattedTime}
@@ -425,13 +436,13 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     {isSettlement ? (
                       <div>
-                        <div className="text-xs font-bold text-[#4edea3] font-headline">
+                        <div className="text-xs font-bold text-[#34d399] font-headline">
                           Cleared
                         </div>
-                        <div className="text-[10px] text-[#bbcabf]">
+                        <div className="text-[10px] text-[#a0aec0]">
                           {formatINR(tx.totalAmount)}
                         </div>
                       </div>
@@ -439,12 +450,12 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
                       <div>
                         <div
                           className={`text-xs font-bold font-headline tabular-nums ${
-                            isMePayer ? 'text-[#4edea3]' : 'text-[#ffb4ab]'
+                            isMePayer ? 'text-[#34d399]' : 'text-[#fb7185]'
                           }`}
                         >
                           {isMePayer ? `+${formatINR(tx.splitAmountOther)}` : `-${formatINR(tx.splitAmountOther)}`}
                         </div>
-                        <div className="text-[10px] text-[#bbcabf]">
+                        <div className="text-[10px] text-[#a0aec0]">
                           {isMePayer ? `${partnerName} owes` : 'You owe'}
                         </div>
                       </div>
@@ -457,46 +468,49 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
         )}
       </div>
 
-      {/* Log Shared Expense Modal */}
+      {/* Log Shared Expense Modal (Bottom Sheet on Mobile) */}
       {showLogModal && (
-        <div className="fixed inset-0 z-50 bg-[#060e20]/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-[#040812]/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-[#171f33] rounded-t-3xl sm:rounded-2xl border border-[#2d3449] p-5 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-md bg-[#121a2d] rounded-t-3xl sm:rounded-3xl border border-white/10 p-5 sm:p-6 shadow-2xl flex flex-col gap-4 max-h-[92vh] overflow-y-auto pb-safe"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[#2d3449]">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#4edea3]/15 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#4edea3] text-[18px]">
+            {/* Mobile Sheet Handle */}
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto sm:hidden mb-1" />
+
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#10b981]/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#34d399] text-[20px]">
                     call_split
                   </span>
                 </div>
-                <h3 className="text-sm font-bold text-[#dae2fd] font-headline">
+                <h3 className="text-base font-bold text-white font-headline">
                   Split Shared Expense
                 </h3>
               </div>
               <button
                 onClick={() => setShowLogModal(false)}
-                className="text-[#bbcabf] hover:text-[#dae2fd] p-1 rounded-lg"
+                className="w-8 h-8 rounded-full bg-[#1c263c] text-[#a0aec0] hover:text-white flex items-center justify-center"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
             <form onSubmit={handleSubmitSharedExpense} className="flex flex-col gap-4">
               {/* Who Paid Toggle */}
               <div>
-                <label className="text-[11px] font-semibold text-[#bbcabf] uppercase tracking-wider block mb-1.5">
+                <label className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider block mb-1.5">
                   Who Fronted the Bill?
                 </label>
-                <div className="grid grid-cols-2 gap-2 bg-[#0b1326] p-1 rounded-xl border border-[#2d3449]">
+                <div className="grid grid-cols-2 gap-2 bg-[#070c18] p-1.5 rounded-2xl border border-white/10">
                   <button
                     type="button"
                     onClick={() => setPayer('me')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                    className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
                       payer === 'me'
-                        ? 'bg-[#4edea3] text-[#003824] shadow-sm'
-                        : 'text-[#bbcabf] hover:text-[#dae2fd]'
+                        ? 'bg-gradient-to-r from-[#10b981] to-[#34d399] text-[#013421] shadow-md'
+                        : 'text-[#a0aec0] hover:text-white'
                     }`}
                   >
                     I Paid (Me)
@@ -504,10 +518,10 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setPayer('partner')}
-                    className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                    className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
                       payer === 'partner'
-                        ? 'bg-[#4edea3] text-[#003824] shadow-sm'
-                        : 'text-[#bbcabf] hover:text-[#dae2fd]'
+                        ? 'bg-gradient-to-r from-[#10b981] to-[#34d399] text-[#013421] shadow-md'
+                        : 'text-[#a0aec0] hover:text-white'
                     }`}
                   >
                     {partnerName} Paid
@@ -517,28 +531,26 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
 
               {/* Date of Expense */}
               <div>
-                <label className="text-[11px] font-semibold text-[#bbcabf] uppercase tracking-wider block mb-1.5">
+                <label className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider block mb-1.5">
                   Date of Split
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    required
-                    max={getTodayStr()}
-                    value={expenseDate}
-                    onChange={(e) => setExpenseDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-xs font-semibold text-[#dae2fd] focus:border-[#4edea3] focus:outline-none"
-                  />
-                </div>
+                <input
+                  type="date"
+                  required
+                  max={getTodayStr()}
+                  value={expenseDate}
+                  onChange={(e) => setExpenseDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-xs font-semibold text-white focus:border-[#34d399] focus:outline-none"
+                />
               </div>
 
               {/* Total Amount Input */}
               <div>
-                <label className="text-[11px] font-semibold text-[#bbcabf] uppercase tracking-wider block mb-1.5">
+                <label className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider block mb-1.5">
                   Total Amount Paid (₹)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-bold text-[#4edea3]">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-[#34d399]">
                     ₹
                   </span>
                   <input
@@ -549,7 +561,7 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
                     placeholder="E.g. 1200"
                     value={totalAmount}
                     onChange={(e) => setTotalAmount(e.target.value)}
-                    className="w-full pl-9 pr-4 py-3 bg-[#0b1326] border border-[#2d3449] rounded-xl text-base font-bold text-[#dae2fd] placeholder-[#bbcabf]/40 focus:border-[#4edea3] focus:outline-none"
+                    className="w-full pl-10 pr-4 py-3.5 bg-[#070c18] border border-white/10 rounded-2xl text-base font-bold text-white placeholder-white/20 focus:border-[#34d399] focus:outline-none"
                   />
                 </div>
               </div>
@@ -557,33 +569,33 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
               {/* Split Division Mode */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[11px] font-semibold text-[#bbcabf] uppercase tracking-wider">
+                  <label className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider">
                     How much should the other person pay?
                   </label>
                   <button
                     type="button"
                     onClick={() => setIsCustomMode(!isCustomMode)}
-                    className="text-[11px] text-[#4edea3] hover:underline"
+                    className="text-[11px] text-[#34d399] font-semibold hover:underline"
                   >
                     {isCustomMode ? 'Use Percentage' : 'Enter Custom ₹'}
                   </button>
                 </div>
 
                 {!isCustomMode ? (
-                  <div className="bg-[#0b1326] p-3 rounded-xl border border-[#2d3449] flex flex-col gap-2.5">
+                  <div className="bg-[#070c18] p-3.5 rounded-2xl border border-white/10 flex flex-col gap-3">
                     <div className="flex items-center justify-between text-xs">
                       <button
                         type="button"
                         onClick={() => setSplitRatio(50)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                           splitRatio === 50
-                            ? 'bg-[#4edea3] text-[#003824]'
-                            : 'bg-[#222a3d] text-[#bbcabf]'
+                            ? 'bg-[#10b981]/25 text-[#34d399] border border-[#10b981]/40'
+                            : 'bg-[#1c263c] text-[#a0aec0]'
                         }`}
                       >
                         50 / 50 Equal Split
                       </button>
-                      <span className="font-bold text-[#4edea3] font-mono">
+                      <span className="font-bold text-[#34d399] font-mono">
                         {splitRatio}% ({formatINR(otherOweAmount)})
                       </span>
                     </div>
@@ -594,17 +606,17 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
                       max="100"
                       value={splitRatio}
                       onChange={(e) => setSplitRatio(parseInt(e.target.value, 10))}
-                      className="w-full h-2 bg-[#222a3d] rounded-lg appearance-none cursor-pointer accent-[#4edea3]"
+                      className="w-full h-2 bg-[#1c263c] rounded-lg appearance-none cursor-pointer accent-[#34d399]"
                     />
 
-                    <div className="flex justify-between text-[11px] text-[#bbcabf] font-mono">
+                    <div className="flex justify-between text-[11px] text-[#a0aec0] font-mono">
                       <span>You: {formatINR(myShareAmount)}</span>
                       <span>{partnerName}: {formatINR(otherOweAmount)}</span>
                     </div>
                   </div>
                 ) : (
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-[#4edea3]">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold text-[#34d399]">
                       ₹
                     </span>
                     <input
@@ -613,7 +625,7 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
                       placeholder={`Amount ${partnerName} owes`}
                       value={customSplit}
                       onChange={(e) => setCustomSplit(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-sm font-semibold text-[#dae2fd] placeholder-[#bbcabf]/40 focus:border-[#4edea3] focus:outline-none"
+                      className="w-full pl-10 pr-4 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-sm font-semibold text-white placeholder-white/20 focus:border-[#34d399] focus:outline-none"
                     />
                   </div>
                 )}
@@ -621,25 +633,25 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
 
               {/* Category Picker */}
               <div>
-                <label className="text-[11px] font-semibold text-[#bbcabf] uppercase tracking-wider block mb-1.5">
+                <label className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider block mb-1.5">
                   Category
                 </label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-4 gap-2">
                   {SHARED_CATEGORIES.map((cat) => (
                     <button
                       key={cat.name}
                       type="button"
                       onClick={() => setCategory(cat.name)}
-                      className={`p-2 rounded-xl text-[11px] flex flex-col items-center gap-1 transition-all border ${
+                      className={`p-2.5 rounded-2xl text-[11px] flex flex-col items-center gap-1.5 transition-all border ${
                         category === cat.name
-                          ? 'bg-[#4edea3]/20 border-[#4edea3] text-[#4edea3] font-bold'
-                          : 'bg-[#0b1326] border-[#2d3449] text-[#bbcabf] hover:text-[#dae2fd]'
+                          ? 'bg-[#10b981]/20 border-[#34d399] text-[#34d399] font-bold shadow-sm'
+                          : 'bg-[#070c18] border-white/10 text-[#a0aec0] hover:text-white'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[16px]">
+                      <span className="material-symbols-outlined text-[18px]">
                         {cat.icon}
                       </span>
-                      <span className="truncate w-full text-center">{cat.name}</span>
+                      <span className="truncate w-full text-center text-[10px]">{cat.name}</span>
                     </button>
                   ))}
                 </div>
@@ -647,7 +659,7 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
 
               {/* Description */}
               <div>
-                <label className="text-[11px] font-semibold text-[#bbcabf] uppercase tracking-wider block mb-1.5">
+                <label className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider block mb-1.5">
                   Description / Note
                 </label>
                 <input
@@ -655,7 +667,7 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
                   placeholder="E.g. Sunday grocery haul at Nature's Basket"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-xs text-[#dae2fd] placeholder-[#bbcabf]/40 focus:border-[#4edea3] focus:outline-none"
+                  className="w-full px-4 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-xs text-white placeholder-white/20 focus:border-[#34d399] focus:outline-none"
                 />
               </div>
 
@@ -663,7 +675,7 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting || parsedTotal <= 0}
-                className="w-full py-3.5 bg-gradient-to-r from-[#10b981] to-[#4edea3] text-[#003824] rounded-xl font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-[#10b981]/25 disabled:opacity-50"
+                className="w-full py-4 bg-gradient-to-r from-[#10b981] to-[#34d399] hover:brightness-110 text-[#013421] rounded-2xl font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xl shadow-[#10b981]/25 disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-[20px] font-bold">
                   check
@@ -677,58 +689,61 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
 
       {/* Settle Up Action Sheet Modal */}
       {showSettleModal && (
-        <div className="fixed inset-0 z-50 bg-[#060e20]/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-[#040812]/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-[#171f33] rounded-t-3xl sm:rounded-2xl border border-[#2d3449] p-5 shadow-2xl flex flex-col gap-4"
+            className="w-full max-w-md bg-[#121a2d] rounded-t-3xl sm:rounded-3xl border border-white/10 p-5 sm:p-6 shadow-2xl flex flex-col gap-4 pb-safe"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[#2d3449]">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#ffb95f]/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[#ffb95f] text-[18px]">
+            {/* Mobile Sheet Handle */}
+            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto sm:hidden mb-1" />
+
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#fbbf24]/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[#fbbf24] text-[20px]">
                     handshake
                   </span>
                 </div>
-                <h3 className="text-sm font-bold text-[#dae2fd] font-headline">
+                <h3 className="text-base font-bold text-white font-headline">
                   Settle Up Bilateral Ledger
                 </h3>
               </div>
               <button
                 onClick={() => setShowSettleModal(false)}
-                className="text-[#bbcabf] hover:text-[#dae2fd] p-1 rounded-lg"
+                className="w-8 h-8 rounded-full bg-[#1c263c] text-[#a0aec0] hover:text-white flex items-center justify-center"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
-            <div className="bg-[#0b1326] p-4 rounded-2xl border border-[#2d3449] text-center flex flex-col items-center gap-1">
-              <span className="text-[11px] text-[#bbcabf] uppercase tracking-wider font-semibold">
+            <div className="bg-[#070c18] p-5 rounded-2xl border border-white/10 text-center flex flex-col items-center gap-1.5">
+              <span className="text-[11px] text-[#a0aec0] uppercase tracking-wider font-semibold">
                 Settlement Amount
               </span>
-              <div className="text-3xl font-extrabold font-headline text-[#4edea3] tabular-nums">
+              <div className="text-4xl font-extrabold font-headline text-[#34d399] tabular-nums tracking-tight">
                 {formatINR(userNetBalance)}
               </div>
-              <p className="text-xs text-[#bbcabf] mt-1">
+              <p className="text-xs text-[#a0aec0] mt-1">
                 {userNetBalance < 0
                   ? `You are transferring ${formatINR(userNetBalance)} to ${partnerName}`
                   : `${partnerName} is transferring ${formatINR(userNetBalance)} to you`}
               </p>
             </div>
 
-            <div className="text-xs text-[#bbcabf] bg-[#222a3d]/50 p-3 rounded-xl border border-[#2d3449]/50 flex items-start gap-2">
-              <span className="material-symbols-outlined text-[18px] text-[#adc6ff] shrink-0">
+            <div className="text-xs text-[#a0aec0] bg-[#1c263c]/60 p-3.5 rounded-2xl border border-white/10 flex items-start gap-2.5">
+              <span className="material-symbols-outlined text-[18px] text-[#adc6ff] shrink-0 mt-0.5">
                 info
               </span>
-              <span>
-                Confirming settlement will log a settlement receipt and reset the cumulative bilateral balance between you and {partnerName} to exactly ₹0.00.
+              <span className="leading-relaxed">
+                Confirming settlement will log an official settlement receipt and reset the cumulative bilateral balance between you and {partnerName} to exactly ₹0.00.
               </span>
             </div>
 
-            <div className="flex flex-col gap-2 pt-1">
+            <div className="flex flex-col gap-2.5 pt-1">
               <button
                 onClick={handleConfirmSettleUp}
                 disabled={isSubmitting}
-                className="w-full py-3.5 bg-gradient-to-r from-[#10b981] to-[#4edea3] text-[#003824] rounded-xl font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-[#10b981]/25 disabled:opacity-50"
+                className="w-full py-4 bg-gradient-to-r from-[#10b981] to-[#34d399] hover:brightness-110 text-[#013421] rounded-2xl font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xl shadow-[#10b981]/25 disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-[20px] font-bold">
                   done_all
@@ -738,7 +753,7 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
 
               <button
                 onClick={() => setShowSettleModal(false)}
-                className="w-full py-2.5 text-xs text-[#bbcabf] hover:text-[#dae2fd]"
+                className="w-full py-2.5 text-xs text-[#a0aec0] hover:text-white transition-colors"
               >
                 Cancel
               </button>

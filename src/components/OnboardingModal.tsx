@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { User } from 'firebase/auth';
 import { UserProfile } from '../types';
 import { createUserProfile, generatePairCode, pairWithRoommate } from '../services/userService';
 
@@ -81,26 +80,29 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#060e20]/90 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#171f33] rounded-3xl border border-[#2d3449] p-6 shadow-2xl flex flex-col gap-5 max-h-[95vh] overflow-y-auto animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-[#040812]/90 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="w-full max-w-md bg-[#121a2d] rounded-t-3xl sm:rounded-3xl border border-white/10 p-5 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[95vh] overflow-y-auto pb-safe animate-in zoom-in-95 duration-200">
+        {/* Mobile Drag Handle */}
+        <div className="w-12 h-1 bg-white/20 rounded-full mx-auto sm:hidden mb-1" />
+
         {/* Header */}
-        <div className="flex flex-col gap-1 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#10b981] to-[#4edea3] flex items-center justify-center shadow-lg shadow-[#10b981]/25 mx-auto mb-1">
-            <span className="material-symbols-outlined text-[#003824] text-[28px] font-bold">
+        <div className="flex flex-col gap-1.5 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#10b981] to-[#34d399] flex items-center justify-center shadow-xl shadow-[#10b981]/25 mx-auto mb-1">
+            <span className="material-symbols-outlined text-[#013421] text-[32px] font-bold">
               balance
             </span>
           </div>
-          <h2 className="text-xl font-bold font-headline text-[#dae2fd]">
+          <h2 className="text-2xl font-extrabold font-headline text-white tracking-tight">
             Welcome to Equilibrium
           </h2>
-          <p className="text-xs text-[#bbcabf]">
+          <p className="text-xs text-[#a0aec0] max-w-xs mx-auto leading-relaxed">
             Let's configure your personal vault and bilateral ledger preferences.
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-[#93000a]/20 border border-[#ffb4ab] text-[#ffb4ab] text-xs rounded-xl flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px]">error</span>
+          <div className="p-3.5 bg-[#fb7185]/20 border border-[#fb7185]/40 text-[#fb7185] text-xs font-semibold rounded-2xl flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-[18px]">error</span>
             <span>{errorMsg}</span>
           </div>
         )}
@@ -108,11 +110,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-xs">
           {/* Question 1: Liquid Bank Balance */}
           <div>
-            <label className="font-semibold text-[#bbcabf] block mb-1">
+            <label className="font-semibold text-[#a0aec0] block mb-1.5">
               1. What is your present liquid bank balance? (₹)
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-[#4edea3] text-sm">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-[#34d399] text-base">
                 ₹
               </span>
               <input
@@ -123,18 +125,18 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 value={currentBalance}
                 onChange={(e) => setCurrentBalance(e.target.value)}
                 placeholder="24450"
-                className="w-full pl-8 pr-3 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-sm font-bold text-[#dae2fd] focus:border-[#4edea3] focus:outline-none"
+                className="w-full pl-9 pr-4 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-base font-bold text-white focus:border-[#34d399] focus:outline-none"
               />
             </div>
           </div>
 
           {/* Question 2: Monthly Budget Cap */}
           <div>
-            <label className="font-semibold text-[#bbcabf] block mb-1">
+            <label className="font-semibold text-[#a0aec0] block mb-1.5">
               2. What is your monthly budget cap? (₹)
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-[#4edea3] text-sm">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-[#34d399] text-base">
                 ₹
               </span>
               <input
@@ -145,19 +147,19 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 value={monthlyBudget}
                 onChange={(e) => setMonthlyBudget(e.target.value)}
                 placeholder="30000"
-                className="w-full pl-8 pr-3 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-sm font-bold text-[#dae2fd] focus:border-[#4edea3] focus:outline-none"
+                className="w-full pl-9 pr-4 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-base font-bold text-white focus:border-[#34d399] focus:outline-none"
               />
             </div>
           </div>
 
           {/* Question 3: Salary Credited Date & Amount */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold text-[#bbcabf] block mb-1">
+              <label className="font-semibold text-[#a0aec0] block mb-1.5">
                 Last Salary (₹)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#4edea3] text-xs">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-[#34d399] text-sm">
                   ₹
                 </span>
                 <input
@@ -168,13 +170,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   value={salaryAmount}
                   onChange={(e) => setSalaryAmount(e.target.value)}
                   placeholder="75000"
-                  className="w-full pl-7 pr-2.5 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-xs font-bold text-[#dae2fd] focus:border-[#4edea3] focus:outline-none"
+                  className="w-full pl-8 pr-3 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-sm font-bold text-white focus:border-[#34d399] focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="font-semibold text-[#bbcabf] block mb-1">
+              <label className="font-semibold text-[#a0aec0] block mb-1.5">
                 Credited Date
               </label>
               <input
@@ -182,27 +184,27 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 value={salaryDate}
                 onChange={(e) => setSalaryDate(e.target.value)}
                 placeholder="Oct 1"
-                className="w-full px-3 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-xs font-bold text-[#dae2fd] focus:border-[#4edea3] focus:outline-none"
+                className="w-full px-3.5 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-sm font-semibold text-white focus:border-[#34d399] focus:outline-none"
               />
             </div>
           </div>
 
           {/* Question 4: Roommate Pair Code / Email (Optional) */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="font-semibold text-[#bbcabf]">
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="font-semibold text-[#a0aec0]">
                 4. Roommate's Pair Code or Email
               </label>
-              <span className="text-[10px] text-[#bbcabf]/70">(Optional)</span>
+              <span className="text-[10px] text-[#a0aec0]/70 font-mono">(Optional)</span>
             </div>
             <input
               type="text"
               value={roommateCodeOrEmail}
               onChange={(e) => setRoommateCodeOrEmail(e.target.value)}
               placeholder="E.g. EQ-49K2 or roommate@gmail.com"
-              className="w-full px-3.5 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-xs font-semibold text-[#dae2fd] focus:border-[#4edea3] focus:outline-none uppercase"
+              className="w-full px-4 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-sm font-semibold text-white focus:border-[#34d399] focus:outline-none uppercase"
             />
-            <p className="text-[10px] text-[#bbcabf] mt-1">
+            <p className="text-[10px] text-[#a0aec0] mt-1.5">
               You can also pair anytime later from the Partner tab.
             </p>
           </div>
@@ -211,12 +213,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full mt-2 py-3.5 bg-gradient-to-r from-[#10b981] to-[#4edea3] text-[#003824] rounded-xl font-headline font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-md shadow-[#10b981]/25 disabled:opacity-50"
+            className="w-full mt-2 py-4 bg-gradient-to-r from-[#10b981] to-[#34d399] hover:brightness-110 text-[#013421] rounded-2xl font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xl shadow-[#10b981]/25 disabled:opacity-50"
           >
-            <span className="material-symbols-outlined text-[18px] font-bold">
-              check
+            <span className="material-symbols-outlined text-[20px] font-bold">
+              rocket_launch
             </span>
-            <span>{isSubmitting ? 'Setting up Vault...' : 'Launch Equilibrium'}</span>
+            <span>{isSubmitting ? 'Configuring Vault...' : 'Launch Equilibrium'}</span>
           </button>
         </form>
       </div>

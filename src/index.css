@@ -1,31 +1,31 @@
 @import "tailwindcss";
 
 @theme {
-  --color-surface: #0b1326;
-  --color-surface-dim: #0b1326;
+  --color-surface: #070c18;
+  --color-surface-dim: #060a15;
   --color-surface-bright: #31394d;
-  --color-surface-container-lowest: #060e20;
-  --color-surface-container-low: #131b2e;
-  --color-surface-container: #171f33;
-  --color-surface-container-high: #222a3d;
-  --color-surface-container-highest: #2d3449;
-  --color-surface-variant: #2d3449;
+  --color-surface-container-lowest: #040812;
+  --color-surface-container-low: #0c1424;
+  --color-surface-container: #121a2d;
+  --color-surface-container-high: #1c263c;
+  --color-surface-container-highest: #26334f;
+  --color-surface-variant: #26334f;
   --color-on-surface: #dae2fd;
-  --color-on-surface-variant: #bbcabf;
-  --color-primary: #4edea3;
-  --color-on-primary: #003824;
+  --color-on-surface-variant: #a0aec0;
+  --color-primary: #34d399;
+  --color-on-primary: #013421;
   --color-primary-container: #10b981;
   --color-on-primary-container: #00422b;
   --color-secondary: #adc6ff;
   --color-on-secondary: #002e6a;
   --color-secondary-container: #0566d9;
-  --color-tertiary: #ffb95f;
-  --color-on-tertiary: #472a00;
-  --color-error: #ffb4ab;
-  --color-on-error: #690005;
-  --color-error-container: #93000a;
-  --color-outline: #86948a;
-  --color-outline-variant: #3c4a42;
+  --color-tertiary: #fbbf24;
+  --color-on-tertiary: #451a03;
+  --color-error: #fb7185;
+  --color-on-error: #4c0519;
+  --color-error-container: #881337;
+  --color-outline: #475569;
+  --color-outline-variant: #334155;
   --font-headline: "Plus Jakarta Sans", sans-serif;
   --font-body: "Inter", sans-serif;
 }
@@ -35,17 +35,51 @@
     width: 100%;
     margin: 0;
     padding: 0;
-    background-color: #0b1326;
+    background-color: #070c18;
     color: #dae2fd;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  /* Safe Area Support for iPhone notch & dynamic island */
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
   }
   .pt-safe {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: max(env(safe-area-inset-top, 0px), 8px);
+  }
+  .bottom-safe {
+    bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+  }
+
+  /* Mobile input zoom prevention: force inputs to 16px minimum on iOS */
+  input, select, textarea {
+    font-size: 16px !important;
   }
 }
 
+/* Tabular figures for financial tickers */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* MNC Glassmorphism Card Style */
+.glass-panel {
+  background: rgba(18, 26, 45, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Subtle Shimmer for interactive elements */
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+.animate-subtle {
+  animation: subtle-pulse 3s infinite ease-in-out;
 }

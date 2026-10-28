@@ -63,43 +63,46 @@ export const QuickIncomeModal: React.FC<QuickIncomeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#060e20]/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 bg-[#040812]/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
       <div
-        className="w-full max-w-sm bg-[#171f33] rounded-t-3xl sm:rounded-2xl border border-[#2d3449] p-5 shadow-2xl flex flex-col gap-4"
+        className="w-full max-w-sm bg-[#121a2d] rounded-t-3xl sm:rounded-3xl border border-white/10 p-5 sm:p-6 shadow-2xl flex flex-col gap-4 pb-safe"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between pb-2 border-b border-[#2d3449]">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#4edea3]/15 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[#4edea3] text-[18px]">
+        {/* Mobile Drag Handle */}
+        <div className="w-12 h-1 bg-white/20 rounded-full mx-auto sm:hidden mb-1" />
+
+        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#10b981]/20 flex items-center justify-center text-[#34d399]">
+              <span className="material-symbols-outlined text-[20px]">
                 add_circle
               </span>
             </div>
-            <h3 className="text-sm font-bold text-[#dae2fd] font-headline">
+            <h3 className="text-base font-bold text-white font-headline">
               Add Funds to Vault
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="text-[#bbcabf] hover:text-[#dae2fd] p-1 rounded-lg"
+            className="w-8 h-8 rounded-full bg-[#1c263c] text-[#a0aec0] hover:text-white flex items-center justify-center"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Income Type */}
-          <div className="grid grid-cols-2 gap-2 bg-[#0b1326] p-1 rounded-xl border border-[#2d3449]">
+          <div className="grid grid-cols-2 gap-2 bg-[#070c18] p-1.5 rounded-2xl border border-white/10">
             <button
               type="button"
               onClick={() => {
                 setIsSalary(true);
                 setSourceNote('Monthly Salary');
               }}
-              className={`py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
                 isSalary
-                  ? 'bg-[#4edea3] text-[#003824] shadow-sm'
-                  : 'text-[#bbcabf] hover:text-[#dae2fd]'
+                  ? 'bg-gradient-to-r from-[#10b981] to-[#34d399] text-[#013421] shadow-md'
+                  : 'text-[#a0aec0] hover:text-white'
               }`}
             >
               Salary Paycheck
@@ -110,10 +113,10 @@ export const QuickIncomeModal: React.FC<QuickIncomeModalProps> = ({
                 setIsSalary(false);
                 setSourceNote('Bank Transfer / Deposit');
               }}
-              className={`py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
                 !isSalary
-                  ? 'bg-[#4edea3] text-[#003824] shadow-sm'
-                  : 'text-[#bbcabf] hover:text-[#dae2fd]'
+                  ? 'bg-gradient-to-r from-[#10b981] to-[#34d399] text-[#013421] shadow-md'
+                  : 'text-[#a0aec0] hover:text-white'
               }`}
             >
               Other Deposit
@@ -122,11 +125,11 @@ export const QuickIncomeModal: React.FC<QuickIncomeModalProps> = ({
 
           {/* Amount */}
           <div>
-            <label className="text-[11px] font-semibold text-[#bbcabf] uppercase tracking-wider block mb-1">
+            <label className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider block mb-1.5">
               Amount Credited (₹)
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-bold text-[#4edea3]">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-[#34d399]">
                 ₹
               </span>
               <input
@@ -137,29 +140,29 @@ export const QuickIncomeModal: React.FC<QuickIncomeModalProps> = ({
                 placeholder={isSalary ? '75000' : '5000'}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-9 pr-4 py-3 bg-[#0b1326] border border-[#2d3449] rounded-xl text-base font-bold text-[#dae2fd] placeholder-[#bbcabf]/40 focus:border-[#4edea3] focus:outline-none"
+                className="w-full pl-10 pr-4 py-3.5 bg-[#070c18] border border-white/10 rounded-2xl text-base font-bold text-white placeholder-white/20 focus:border-[#34d399] focus:outline-none"
               />
             </div>
           </div>
 
           {/* Source Note */}
           <div>
-            <label className="text-[11px] font-semibold text-[#bbcabf] uppercase tracking-wider block mb-1">
-              Note
+            <label className="text-[11px] font-semibold text-[#a0aec0] uppercase tracking-wider block mb-1.5">
+              Deposit Note / Reference
             </label>
             <input
               type="text"
               value={sourceNote}
               onChange={(e) => setSourceNote(e.target.value)}
               placeholder="Source description"
-              className="w-full px-3.5 py-2.5 bg-[#0b1326] border border-[#2d3449] rounded-xl text-xs text-[#dae2fd] placeholder-[#bbcabf]/40 focus:border-[#4edea3] focus:outline-none"
+              className="w-full px-4 py-3 bg-[#070c18] border border-white/10 rounded-2xl text-xs text-white placeholder-white/20 focus:border-[#34d399] focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting || !amount}
-            className="w-full py-3.5 bg-gradient-to-r from-[#10b981] to-[#4edea3] text-[#003824] rounded-xl font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-[#10b981]/25 disabled:opacity-50"
+            className="w-full py-4 bg-gradient-to-r from-[#10b981] to-[#34d399] hover:brightness-110 text-[#013421] rounded-2xl font-headline font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xl shadow-[#10b981]/25 disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[20px] font-bold">
               check

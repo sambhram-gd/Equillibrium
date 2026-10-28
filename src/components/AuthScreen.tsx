@@ -41,61 +41,64 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onGuestLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b1326] text-[#dae2fd] flex flex-col justify-between p-6 max-w-md mx-auto">
+    <div className="min-h-screen bg-[#070c18] text-[#dae2fd] flex flex-col justify-between p-6 max-w-md mx-auto pt-safe pb-safe selection:bg-[#34d399]/30">
       {/* Top Brand Logo */}
-      <div className="pt-8 flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#10b981] to-[#4edea3] flex items-center justify-center shadow-xl shadow-[#10b981]/25 mb-4">
-          <span className="material-symbols-outlined text-[#003824] text-[36px] font-bold">
-            balance
-          </span>
+      <div className="pt-6 flex flex-col items-center text-center">
+        <div className="relative mb-4">
+          <div className="absolute inset-0 bg-[#34d399]/20 rounded-3xl blur-xl"></div>
+          <div className="relative w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#10b981] to-[#34d399] flex items-center justify-center shadow-xl shadow-[#10b981]/30">
+            <span className="material-symbols-outlined text-[#013421] text-[36px] font-bold">
+              balance
+            </span>
+          </div>
         </div>
-        <h1 className="text-3xl font-extrabold font-headline tracking-tight text-[#dae2fd]">
+        <h1 className="text-3xl font-extrabold font-headline tracking-tight text-white">
           Equilibrium
         </h1>
-        <p className="text-xs text-[#bbcabf] max-w-xs mt-2 leading-relaxed">
+        <p className="text-xs text-[#a0aec0] max-w-xs mt-2 leading-relaxed">
           High-performance personal budget management & bilateral zero-sum roommate expense tracking.
         </p>
       </div>
 
       {/* Feature Highlights Card */}
-      <div className="my-8 bg-[#171f33] rounded-3xl p-5 border border-[#2d3449] shadow-lg flex flex-col gap-4">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#4edea3]/15 text-[#4edea3] flex items-center justify-center shrink-0">
+      <div className="my-6 glass-panel rounded-3xl p-5 sm:p-6 border border-white/10 shadow-2xl flex flex-col gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-[#10b981]/15 text-[#34d399] flex items-center justify-center shrink-0 border border-[#10b981]/25">
             <span className="material-symbols-outlined text-[20px]">bolt</span>
           </div>
           <div>
-            <h3 className="text-xs font-bold text-[#dae2fd] font-headline">
+            <h3 className="text-xs font-bold text-white font-headline">
               Rapid Log Console
             </h3>
-            <p className="text-[11px] text-[#bbcabf] mt-0.5 leading-snug">
+            <p className="text-[11px] text-[#a0aec0] mt-0.5 leading-snug">
               ₹2 incremental slider with odd-number fine tuning + tactile virtual numeric keypad.
             </p>
           </div>
         </div>
 
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#adc6ff]/15 text-[#adc6ff] flex items-center justify-center shrink-0">
+        <div className="flex items-start gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-[#adc6ff]/15 text-[#adc6ff] flex items-center justify-center shrink-0 border border-[#adc6ff]/25">
             <span className="material-symbols-outlined text-[20px]">sync_alt</span>
           </div>
           <div>
-            <h3 className="text-xs font-bold text-[#dae2fd] font-headline">
+            <h3 className="text-xs font-bold text-white font-headline">
               Bilateral Zero-Sum Netting
             </h3>
-            <p className="text-[11px] text-[#bbcabf] mt-0.5 leading-snug">
-              Cumulative balance offsets roommate debts automatically to zero without manual debt spreadsheets.
+            <p className="text-[11px] text-[#a0aec0] mt-0.5 leading-snug">
+              Cumulative balance offsets roommate debts automatically to zero without manual spreadsheets.
             </p>
           </div>
         </div>
 
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#ffb95f]/15 text-[#ffb95f] flex items-center justify-center shrink-0">
+        <div className="flex items-start gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-[#fbbf24]/15 text-[#fbbf24] flex items-center justify-center shrink-0 border border-[#fbbf24]/25">
             <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
           </div>
           <div>
-            <h3 className="text-xs font-bold text-[#dae2fd] font-headline">
+            <h3 className="text-xs font-bold text-white font-headline">
               Liquid Cash Vault
             </h3>
-            <p className="text-[11px] text-[#bbcabf] mt-0.5 leading-snug">
+            <p className="text-[11px] text-[#a0aec0] mt-0.5 leading-snug">
               Live tracking of your present liquid bank balance and monthly burn-down rate.
             </p>
           </div>
@@ -103,9 +106,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onGuestLogin }) => {
       </div>
 
       {/* Bottom Auth Action */}
-      <div className="pb-6 flex flex-col gap-3">
+      <div className="pb-4 flex flex-col gap-3">
         {error && (
-          <div className="p-3 bg-[#93000a]/20 border border-[#ffb4ab] text-[#ffb4ab] text-xs rounded-xl flex items-center gap-2">
+          <div className="p-3.5 bg-[#fb7185]/20 border border-[#fb7185]/40 text-[#fb7185] text-xs font-semibold rounded-2xl flex items-center gap-2">
             <span className="material-symbols-outlined text-[16px]">error</span>
             <span className="text-[11px]">{error}</span>
           </div>
@@ -114,10 +117,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onGuestLogin }) => {
         <button
           onClick={handleSignIn}
           disabled={loading}
-          className="w-full py-4 bg-[#dae2fd] hover:bg-white text-[#0b1326] rounded-2xl font-headline font-bold text-sm flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-xl disabled:opacity-50"
+          className="w-full py-4 bg-white hover:bg-[#dae2fd] text-[#070c18] rounded-2xl font-headline font-bold text-sm flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-xl disabled:opacity-50"
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-[#0b1326] border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-5 h-5 border-2 border-[#070c18] border-t-transparent rounded-full animate-spin"></div>
           ) : (
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -144,13 +147,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onGuestLogin }) => {
         <button
           onClick={handleGuestAccess}
           type="button"
-          className="w-full py-3 bg-[#171f33] hover:bg-[#222a3d] border border-[#2d3449] text-[#dae2fd] rounded-2xl font-headline font-semibold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+          className="w-full py-3.5 bg-[#121a2d] hover:bg-[#1c263c] border border-white/10 text-white rounded-2xl font-headline font-semibold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md"
         >
-          <span className="material-symbols-outlined text-[16px] text-[#4edea3]">bolt</span>
+          <span className="material-symbols-outlined text-[18px] text-[#34d399]">bolt</span>
           <span>Quick Access (Offline / Local Mode)</span>
         </button>
 
-        <p className="text-[10px] text-center text-[#bbcabf]">
+        <p className="text-[10px] text-center text-[#a0aec0] mt-1">
           Zero passwords • Instant auto-saving in browser & Cloud Firestore
         </p>
       </div>

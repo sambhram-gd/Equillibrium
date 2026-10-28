@@ -137,7 +137,6 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
     if (mappedPoints.length === 0) return '';
     return mappedPoints.reduce((acc, pt, idx) => {
       if (idx === 0) return `M ${pt.x} ${pt.y}`;
-      // Smooth cubic bezier or straight lines
       const prev = mappedPoints[idx - 1];
       const cx = (prev.x + pt.x) / 2;
       return `${acc} C ${cx} ${prev.y}, ${cx} ${pt.y}, ${pt.x} ${pt.y}`;
@@ -158,23 +157,23 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
   };
 
   return (
-    <div className="bg-[#171f33] rounded-2xl p-4 border border-[#2d3449]/70 flex flex-col gap-3 shadow-sm">
+    <div className="glass-panel rounded-3xl p-5 border border-white/10 flex flex-col gap-3 shadow-xl backdrop-blur-xl">
       {/* Chart Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <div className="w-6 h-6 rounded-lg bg-[#4edea3]/15 flex items-center justify-center text-[#4edea3]">
-            <span className="material-symbols-outlined text-[16px]">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-xl bg-[#10b981]/20 flex items-center justify-center text-[#34d399]">
+            <span className="material-symbols-outlined text-[17px]">
               show_chart
             </span>
           </div>
           <div>
-            <span className="text-xs font-bold text-[#dae2fd] font-headline">
+            <span className="text-xs font-bold text-white font-headline">
               Daily Expense Trend
             </span>
-            <div className="text-[10px] text-[#bbcabf]">
-              Avg <strong className="text-[#4edea3]">{formatINR(avgDailySpend)}</strong> / day
+            <div className="text-[10px] text-[#a0aec0]">
+              Avg <strong className="text-[#34d399] font-semibold">{formatINR(avgDailySpend)}</strong> / day
               {salaryDate && (
-                <span className="ml-1 text-[10px] text-[#bbcabf]/75">
+                <span className="ml-1 text-[10px] text-[#a0aec0]/75">
                   • Cycle from {salaryDate}
                 </span>
               )}
@@ -183,7 +182,7 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
         </div>
 
         {/* Range Selector */}
-        <div className="bg-[#0b1326] p-0.5 rounded-lg border border-[#2d3449] flex items-center gap-0.5">
+        <div className="bg-[#070c18] p-1 rounded-xl border border-white/10 flex items-center gap-1">
           {(['7d', '14d', '30d'] as const).map((r) => (
             <button
               key={r}
@@ -191,10 +190,10 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
                 setRange(r);
                 setActivePoint(null);
               }}
-              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold font-headline transition-all ${
                 range === r
-                  ? 'bg-[#4edea3] text-[#003824] shadow-xs'
-                  : 'text-[#bbcabf] hover:text-[#dae2fd]'
+                  ? 'bg-gradient-to-r from-[#10b981] to-[#34d399] text-[#013421] shadow-xs'
+                  : 'text-[#a0aec0] hover:text-white'
               }`}
             >
               {r.toUpperCase()}
@@ -208,15 +207,15 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
         {/* Active Tooltip Popover */}
         {activePoint && (
           <div
-            className="absolute z-20 pointer-events-none -top-1 px-2.5 py-1 bg-[#0b1326]/95 border border-[#4edea3] rounded-lg shadow-xl text-center transform -translate-x-1/2 transition-all duration-75"
+            className="absolute z-20 pointer-events-none -top-1 px-3 py-1.5 bg-[#070c18]/95 border border-[#34d399] rounded-xl shadow-2xl text-center transform -translate-x-1/2 transition-all duration-75 backdrop-blur-md"
             style={{
               left: `${(activePoint.x / svgWidth) * 100}%`,
             }}
           >
-            <div className="text-[11px] font-bold text-[#4edea3] font-headline">
+            <div className="text-[11px] font-extrabold text-[#34d399] font-headline">
               {formatINR(activePoint.amount)}
             </div>
-            <div className="text-[9px] text-[#bbcabf]">
+            <div className="text-[9px] text-[#a0aec0]">
               {activePoint.label} {activePoint.count > 0 ? `(${activePoint.count} ${activePoint.count === 1 ? 'log' : 'logs'})` : '• No logs'}
             </div>
           </div>
@@ -230,14 +229,14 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
           <defs>
             {/* Emerald glow gradient */}
             <linearGradient id="emeraldAreaGlow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#4edea3" stopOpacity="0.3" />
-              <stop offset="60%" stopColor="#4edea3" stopOpacity="0.08" />
-              <stop offset="100%" stopColor="#4edea3" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="#34d399" stopOpacity="0.35" />
+              <stop offset="60%" stopColor="#34d399" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="#34d399" stopOpacity="0.0" />
             </linearGradient>
 
             {/* Line glow filter */}
             <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#4edea3" floodOpacity="0.4" />
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#34d399" floodOpacity="0.4" />
             </filter>
           </defs>
 
@@ -247,29 +246,29 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
             y1={paddingTop + chartInnerHeight * 0.25}
             x2={svgWidth - paddingX}
             y2={paddingTop + chartInnerHeight * 0.25}
-            stroke="#2d3449"
+            stroke="#1c263c"
             strokeDasharray="3 3"
             strokeWidth="0.8"
-            opacity="0.4"
+            opacity="0.6"
           />
           <line
             x1={paddingX}
             y1={paddingTop + chartInnerHeight * 0.65}
             x2={svgWidth - paddingX}
             y2={paddingTop + chartInnerHeight * 0.65}
-            stroke="#2d3449"
+            stroke="#1c263c"
             strokeDasharray="3 3"
             strokeWidth="0.8"
-            opacity="0.4"
+            opacity="0.6"
           />
           <line
             x1={paddingX}
             y1={paddingTop + chartInnerHeight}
             x2={svgWidth - paddingX}
             y2={paddingTop + chartInnerHeight}
-            stroke="#2d3449"
+            stroke="#1c263c"
             strokeWidth="1"
-            opacity="0.6"
+            opacity="0.8"
           />
 
           {/* Area Fill */}
@@ -279,7 +278,7 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
           <path
             d={linePath}
             fill="none"
-            stroke="#4edea3"
+            stroke="#34d399"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -298,11 +297,11 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
                 onMouseEnter={() => setActivePoint(pt)}
                 onTouchStart={() => setActivePoint(pt)}
               >
-                {/* Invisible larger touch target */}
+                {/* Invisible larger touch target for mobile fingertips */}
                 <circle
                   cx={pt.x}
                   cy={pt.y}
-                  r="14"
+                  r="16"
                   fill="transparent"
                 />
 
@@ -313,7 +312,7 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
                     y1={paddingTop}
                     x2={pt.x}
                     y2={paddingTop + chartInnerHeight}
-                    stroke="#4edea3"
+                    stroke="#34d399"
                     strokeWidth="1"
                     strokeDasharray="2 2"
                     opacity="0.8"
@@ -324,10 +323,10 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
                 <circle
                   cx={pt.x}
                   cy={pt.y}
-                  r={isHovered ? 5 : hasSpend ? 3.5 : 2}
-                  fill={isHovered ? '#6ffbbe' : hasSpend ? '#4edea3' : '#2d3449'}
-                  stroke={isHovered ? '#003824' : '#0b1326'}
-                  strokeWidth={isHovered ? 2 : 1}
+                  r={isHovered ? 5.5 : hasSpend ? 3.5 : 2}
+                  fill={isHovered ? '#6ffbbe' : hasSpend ? '#34d399' : '#1c263c'}
+                  stroke={isHovered ? '#013421' : '#070c18'}
+                  strokeWidth={isHovered ? 2.5 : 1}
                   className="transition-all duration-100"
                 />
               </g>
@@ -336,7 +335,6 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
 
           {/* X-Axis Day Labels */}
           {mappedPoints.map((pt, idx) => {
-            // Label every step or every 2/5 steps depending on range
             const step = range === '30d' ? 6 : range === '14d' ? 3 : 1;
             const isLast = idx === mappedPoints.length - 1;
             const isFirst = idx === 0;
@@ -348,10 +346,10 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
                 x={pt.x}
                 y={svgHeight - 4}
                 textAnchor="middle"
-                fontSize="8"
-                fill="#bbcabf"
+                fontSize="8.5"
+                fill="#a0aec0"
                 fontFamily="Inter, sans-serif"
-                opacity="0.75"
+                opacity="0.85"
               >
                 {pt.shortLabel}
               </text>
@@ -361,11 +359,11 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
       </div>
 
       {/* Bottom Summary Bar */}
-      <div className="flex items-center justify-between pt-1 border-t border-[#2d3449]/40 text-[11px] text-[#bbcabf]">
+      <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[11px] text-[#a0aec0]">
         <span>
-          Period Spend: <strong className="text-[#dae2fd]">{formatINR(totalPeriodSpend)}</strong>
+          Period Spend: <strong className="text-white font-semibold">{formatINR(totalPeriodSpend)}</strong>
         </span>
-        <span className="text-[10px] text-[#4edea3]">
+        <span className="text-[10px] text-[#34d399] font-medium">
           Tap any point to inspect day
         </span>
       </div>
