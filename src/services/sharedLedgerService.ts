@@ -188,7 +188,8 @@ export function listenToSharedTransactions(
 
 export async function addSharedTransaction(
   ledgerId: string,
-  transactionData: Omit<SharedTransaction, 'id'>
+  transactionData: Omit<SharedTransaction, 'id'>,
+  memberUids?: [string, string]
 ): Promise<string> {
   const newTxId = 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
   const fullTx: SharedTransaction = {
@@ -203,7 +204,15 @@ export async function addSharedTransaction(
 
   // 2. Update local ledger balance
   let currentLedger = getLocalLedger(ledgerId);
-  const members = currentLedger?.members || ledgerId.split('_');
+  let members: string[] = [];
+  if (currentLedger?.members && currentLedger.members.length === 2) {
+    members = currentLedger.members;
+  } else if (memberUids && memberUids.length === 2) {
+    members = [...memberUids].sort();
+  } else {
+    members = [fullTx.paidBy, 'partner'];
+  }
+
   const user1 = currentLedger?.user1 || members[0] || '';
   const user2 = currentLedger?.user2 || members[1] || '';
 
@@ -213,6 +222,8 @@ export async function addSharedTransaction(
       members,
       user1,
       user2,
+      user1Name: user1 === fullTx.paidBy ? fullTx.paidByName : 'Roommate',
+      user2Name: user2 === fullTx.paidBy ? fullTx.paidByName : 'Roommate',
       netBalance: 0,
       lastUpdated: new Date().toISOString(),
     };
@@ -225,10 +236,11 @@ export async function addSharedTransaction(
   const balanceDelta = isUser1Payer
     ? fullTx.splitAmountOther
     : -fullTx.splitAmountOther;
-  const newNetBalance = currentLedger.netBalance + balanceDelta;
+  const newNetBalance = (currentLedger.netBalance || 0) + balanceDelta;
 
   const updatedLedger: SharedLedger = {
     ...currentLedger,
+    members,
     netBalance: newNetBalance,
     lastUpdated: new Date().toISOString(),
   };

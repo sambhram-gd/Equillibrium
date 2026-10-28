@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { UserProfile, SharedLedger, SharedTransaction } from '../types';
-import { addSharedTransaction, settleUpLedger } from '../services/sharedLedgerService';
+import { addSharedTransaction, settleUpLedger, getLedgerId } from '../services/sharedLedgerService';
 
 interface SharedLedgerViewProps {
   user: UserProfile;
@@ -96,26 +96,31 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
 
   const handleSubmitSharedExpense = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ledger || !ledger.id) return;
+
+    const targetLedgerId =
+      ledger?.id ||
+      getLedgerId(user.uid, user.partnerUid, user.email, user.partnerEmail);
+
+    if (!user.partnerUid && !user.partnerEmail) {
+      showToast('Please connect with your roommate first in the Partner tab.');
+      return;
+    }
 
     if (parsedTotal <= 0) {
-      showToast('Please enter a valid expense amount');
+      showToast('Please enter an amount greater than ₹0');
       return;
     }
 
-    if (otherOweAmount <= 0) {
-      showToast("Roommate's share must be greater than ₹0");
-      return;
-    }
+    const effectiveOwe = otherOweAmount > 0 ? otherOweAmount : Math.round(parsedTotal / 2);
 
-    if (otherOweAmount > parsedTotal) {
+    if (effectiveOwe > parsedTotal) {
       showToast("Roommate's share cannot exceed the total amount");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const paidByUid = payer === 'me' ? user.uid : (user.partnerUid || '');
+      const paidByUid = payer === 'me' ? user.uid : (user.partnerUid || 'partner_rm');
       const paidByName = payer === 'me' ? user.displayName : partnerName;
 
       // Construct timestamp with selected date
@@ -130,18 +135,27 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
         now.getSeconds()
       );
 
-      await addSharedTransaction(ledger.id, {
-        paidBy: paidByUid,
-        paidByName,
-        totalAmount: parsedTotal,
-        splitAmountOther: otherOweAmount,
-        category,
-        description: description.trim() || `${category} Split`,
-        timestamp: splitDate.toISOString(),
-      });
+      const members: [string, string] = [user.uid, user.partnerUid || 'partner_rm'];
+
+      await addSharedTransaction(
+        targetLedgerId,
+        {
+          paidBy: paidByUid,
+          paidByName,
+          totalAmount: parsedTotal,
+          splitAmountOther: effectiveOwe,
+          category,
+          description: description.trim() || `${category} Split`,
+          timestamp: splitDate.toISOString(),
+        },
+        members
+      );
 
       setShowLogModal(false);
       showToast(`Shared expense of ${formatINR(parsedTotal)} logged!`);
+      setTotalAmount('');
+      setDescription('');
+      setCustomSplit('');
     } catch (err) {
       console.error('Error logging shared expense', err);
       showToast('Failed to record shared expense');
