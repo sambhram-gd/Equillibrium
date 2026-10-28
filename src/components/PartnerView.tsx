@@ -70,12 +70,16 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
   let myNetBalance = 0;
 
   if (ledger) {
-    myNetBalance = user.uid === ledger.user1 ? ledger.netBalance : -ledger.netBalance;
+    const isUser1 =
+      user.uid === ledger.user1 ||
+      (user.email && ledger.user1 && ledger.user1.includes(user.email.toLowerCase().replace(/[^a-z0-9]/g, '_')));
+    myNetBalance = isUser1 ? ledger.netBalance : -ledger.netBalance;
   }
 
   transactions.forEach((tx) => {
     if (tx.isSettlement) return;
-    if (tx.paidBy === user.uid) {
+    const isMe = tx.paidBy === user.uid || (user.displayName && tx.paidByName === user.displayName);
+    if (isMe) {
       totalFrontedByMe += tx.totalAmount;
     } else {
       totalFrontedByPartner += tx.totalAmount;

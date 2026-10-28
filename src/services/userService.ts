@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { UserProfile, PairingCodeDoc, SharedLedger } from '../types';
+import { getLedgerId, saveLocalLedger } from './sharedLedgerService';
 
 const PROFILE_KEY_PREFIX = 'eq_profile_';
 const LAST_PROFILE_KEY = 'eq_last_profile';
@@ -51,6 +52,9 @@ export function saveLocalProfile(profile: UserProfile): void {
     if (profile.pairCode) {
       const storedCodes = JSON.parse(localStorage.getItem(PAIRING_CODES_KEY) || '{}');
       storedCodes[profile.pairCode.toUpperCase()] = profile;
+      if (profile.email) {
+        storedCodes[profile.email.toLowerCase()] = profile;
+      }
       localStorage.setItem(PAIRING_CODES_KEY, JSON.stringify(storedCodes));
     }
 
@@ -61,11 +65,34 @@ export function saveLocalProfile(profile: UserProfile): void {
   }
 }
 
-export async function getUserProfile(uid: string): Promise<UserProfile | null> {
-  // 1. Check local cache first
-  const local = getLocalProfile(uid);
+export async function registerUserInLookup(profile: UserProfile): Promise<void> {
+  if (!profile.uid) return;
+  const cleanEmail = (profile.email || '').toLowerCase().trim();
+  const codeDoc: PairingCodeDoc = {
+    uid: profile.uid,
+    displayName: profile.displayName || 'Roommate',
+    email: cleanEmail,
+    pairCode: profile.pairCode || 'EQ-USER',
+    createdAt: new Date().toISOString(),
+  };
 
-  // 2. Try fetching from Firestore
+  try {
+    // 1. Register by 6-character pair code
+    if (profile.pairCode) {
+      await setDoc(doc(db, 'pairing_codes', profile.pairCode.toUpperCase().trim()), codeDoc, { merge: true });
+    }
+    // 2. Register by email and EMAIL_ prefix
+    if (cleanEmail) {
+      await setDoc(doc(db, 'pairing_codes', cleanEmail), codeDoc, { merge: true });
+      await setDoc(doc(db, 'pairing_codes', 'EMAIL_' + cleanEmail), codeDoc, { merge: true });
+    }
+  } catch (err) {
+    console.warn('Pairing lookup registration notice:', err);
+  }
+}
+
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+  const local = getLocalProfile(uid);
   const path = `users/${uid}`;
   try {
     const snap = await getDoc(doc(db, 'users', uid));
@@ -89,6 +116,7 @@ export function listenToUserProfile(
   const initialLocal = getLocalProfile(uid);
   if (initialLocal) {
     callback(initialLocal);
+    registerUserInLookup(initialLocal);
   }
 
   // 2. Listen to custom window events for immediate local updates
@@ -111,9 +139,17 @@ export function listenToUserProfile(
         if (snap.exists()) {
           const remoteProfile = snap.data() as UserProfile;
           saveLocalProfile(remoteProfile);
+          registerUserInLookup(remoteProfile);
           callback(remoteProfile);
+
+          // Auto-upgrade partner UID if synthetic
+          if (
+            remoteProfile.partnerEmail &&
+            (!remoteProfile.partnerUid || remoteProfile.partnerUid.startsWith('partner_'))
+          ) {
+            autoResolvePartnerUid(remoteProfile);
+          }
         } else {
-          // Only send null if we truly have no local profile
           const currentLocal = getLocalProfile(uid);
           if (!currentLocal) {
             callback(null);
@@ -122,7 +158,6 @@ export function listenToUserProfile(
       },
       (error) => {
         handleFirestoreError(error, OperationType.GET, path);
-        // Do NOT call callback(null) on error; preserve local profile!
         const currentLocal = getLocalProfile(uid);
         if (currentLocal) {
           callback(currentLocal);
@@ -133,34 +168,51 @@ export function listenToUserProfile(
     console.warn('Firestore snapshot setup skipped/failed:', err);
   }
 
+  // Also check local auto-upgrade
+  if (initialLocal?.partnerEmail && (!initialLocal.partnerUid || initialLocal.partnerUid.startsWith('partner_'))) {
+    autoResolvePartnerUid(initialLocal);
+  }
+
   return () => {
     window.removeEventListener('eq_profile_updated', handleLocalUpdate);
     unsubscribeFirestore();
   };
 }
 
-export async function createUserProfile(profile: UserProfile): Promise<void> {
-  // 1. Always save locally first
-  saveLocalProfile(profile);
+async function autoResolvePartnerUid(profile: UserProfile): Promise<void> {
+  if (!profile.partnerEmail) return;
+  const cleanEmail = profile.partnerEmail.toLowerCase().trim();
+  const keys = [cleanEmail, 'EMAIL_' + cleanEmail];
 
-  // 2. Sync to Firestore in background
+  for (const k of keys) {
+    try {
+      const snap = await getDoc(doc(db, 'pairing_codes', k));
+      if (snap.exists()) {
+        const pCode = snap.data() as PairingCodeDoc;
+        if (pCode.uid && pCode.uid !== profile.uid && pCode.uid !== profile.partnerUid) {
+          console.log(`Auto-upgrading partner UID for ${cleanEmail} to ${pCode.uid}`);
+          await updateUserProfile(profile.uid, {
+            partnerUid: pCode.uid,
+            partnerName: pCode.displayName || profile.partnerName,
+          });
+          break;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+}
+
+export async function createUserProfile(profile: UserProfile): Promise<void> {
+  saveLocalProfile(profile);
+  registerUserInLookup(profile);
+
   const path = `users/${profile.uid}`;
   try {
     await setDoc(doc(db, 'users', profile.uid), profile, { merge: true });
-
-    if (profile.pairCode) {
-      const codeDoc: PairingCodeDoc = {
-        uid: profile.uid,
-        displayName: profile.displayName,
-        email: profile.email,
-        pairCode: profile.pairCode,
-        createdAt: new Date().toISOString(),
-      };
-      await setDoc(doc(db, 'pairing_codes', profile.pairCode), codeDoc, { merge: true });
-    }
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
-    // Non-fatal: local profile is safe
   }
 }
 
@@ -168,14 +220,13 @@ export async function updateUserProfile(
   uid: string,
   data: Partial<UserProfile>
 ): Promise<void> {
-  // 1. Update local storage
   const current = getLocalProfile(uid);
   if (current) {
     const updated = { ...current, ...data };
     saveLocalProfile(updated);
+    registerUserInLookup(updated);
   }
 
-  // 2. Sync to Firestore
   const path = `users/${uid}`;
   try {
     await setDoc(doc(db, 'users', uid), data, { merge: true });
@@ -193,52 +244,65 @@ export async function pairWithRoommate(
     return { success: false, message: 'Please enter a valid pair code, email, or roommate name.' };
   }
 
+  // Make sure current user is registered so roommate can find back
+  await registerUserInLookup(currentUser);
+
   let partnerUid: string | null = null;
   let partnerData: UserProfile | null = null;
 
-  // 1. Try checking pair code collection first from Firestore
-  try {
-    const codeSnap = await getDoc(doc(db, 'pairing_codes', cleanInput.toUpperCase()));
-    if (codeSnap.exists()) {
-      const pCode = codeSnap.data() as PairingCodeDoc;
-      partnerUid = pCode.uid;
+  const candidateKeys = [
+    cleanInput.toUpperCase(),
+    cleanInput.toLowerCase(),
+    'EMAIL_' + cleanInput.toLowerCase(),
+  ];
+
+  // 1. Try checking candidate keys in pairing_codes collection
+  for (const key of candidateKeys) {
+    try {
+      const codeSnap = await getDoc(doc(db, 'pairing_codes', key));
+      if (codeSnap.exists()) {
+        const pCode = codeSnap.data() as PairingCodeDoc;
+        if (pCode.uid && pCode.uid !== currentUser.uid) {
+          partnerUid = pCode.uid;
+          partnerData = {
+            uid: pCode.uid,
+            displayName: pCode.displayName,
+            email: pCode.email,
+            currentBalance: 0,
+            monthlyBudget: 30000,
+            salaryAmount: 0,
+            salaryDate: '1st of Month',
+            pairCode: pCode.pairCode,
+            createdAt: pCode.createdAt,
+          };
+          break;
+        }
+      }
+    } catch (err) {
+      console.warn('Pair code lookup check:', key, err);
     }
-  } catch (err) {
-    console.warn('Pair code remote lookup failed', err);
   }
 
   // 2. Check local pair code cache
   if (!partnerUid) {
     try {
       const localCodes = JSON.parse(localStorage.getItem(PAIRING_CODES_KEY) || '{}');
-      const cached = localCodes[cleanInput.toUpperCase()];
-      if (cached && cached.uid !== currentUser.uid) {
-        partnerUid = cached.uid;
-        partnerData = cached;
+      for (const k of candidateKeys) {
+        const cached = localCodes[k];
+        if (cached && cached.uid !== currentUser.uid) {
+          partnerUid = cached.uid;
+          partnerData = cached;
+          break;
+        }
       }
     } catch {
       // ignore
     }
   }
 
-  // 3. If not found by code, try by email query in Firestore
+  // 3. Fallback: If pairing offline or by direct name/custom identifier
   if (!partnerUid) {
-    try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', cleanInput.toLowerCase()));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        partnerUid = snap.docs[0].id;
-        partnerData = snap.docs[0].data() as UserProfile;
-      }
-    } catch (err) {
-      console.warn('Email query failed', err);
-    }
-  }
-
-  // 4. Fallback: If pairing offline or by direct name/custom identifier
-  if (!partnerUid) {
-    // Treat cleanInput as roommate name or email directly so roommate pairing ALWAYS works!
+    const isEmail = cleanInput.includes('@');
     const syntheticUid = 'partner_' + cleanInput.toLowerCase().replace(/[^a-z0-9]/g, '_');
     if (syntheticUid === currentUser.uid) {
       return { success: false, message: 'You cannot pair with yourself.' };
@@ -246,8 +310,8 @@ export async function pairWithRoommate(
     partnerUid = syntheticUid;
     partnerData = {
       uid: syntheticUid,
-      displayName: cleanInput.includes('@') ? cleanInput.split('@')[0] : cleanInput,
-      email: cleanInput.includes('@') ? cleanInput : `${cleanInput.toLowerCase().replace(/\s+/g, '')}@equilibrium.app`,
+      displayName: isEmail ? cleanInput.split('@')[0] : cleanInput,
+      email: isEmail ? cleanInput.toLowerCase() : `${cleanInput.toLowerCase().replace(/\s+/g, '')}@equilibrium.app`,
       currentBalance: 0,
       monthlyBudget: 30000,
       salaryAmount: 0,
@@ -265,35 +329,33 @@ export async function pairWithRoommate(
     return { success: false, message: 'You cannot pair with yourself.' };
   }
 
-  // Fetch partner profile if not yet fetched
-  if (!partnerData) {
-    partnerData = await getUserProfile(partnerUid);
-  }
-
-  if (!partnerData) {
-    partnerData = {
-      uid: partnerUid,
-      displayName: cleanInput,
-      email: cleanInput,
-      currentBalance: 0,
-      monthlyBudget: 30000,
-      salaryAmount: 0,
-      salaryDate: '1st of Month',
-      pairCode: cleanInput.toUpperCase(),
-      createdAt: new Date().toISOString(),
-    };
-  }
+  const resolvedPartner: UserProfile = partnerData || {
+    uid: partnerUid,
+    displayName: cleanInput.includes('@') ? cleanInput.split('@')[0] : cleanInput,
+    email: cleanInput.includes('@') ? cleanInput.toLowerCase() : `${cleanInput.toLowerCase()}@equilibrium.app`,
+    currentBalance: 0,
+    monthlyBudget: 30000,
+    salaryAmount: 0,
+    salaryDate: '1st of Month',
+    pairCode: 'EQ-RM',
+    createdAt: new Date().toISOString(),
+  };
 
   // Link both users
   try {
+    const ledgerId = getLedgerId(
+      currentUser.uid,
+      partnerUid,
+      currentUser.email,
+      resolvedPartner.email
+    );
+
     const members = [currentUser.uid, partnerUid].sort();
-    const ledgerId = members.join('_');
     const user1 = members[0];
     const user2 = members[1];
-    const user1Name = user1 === currentUser.uid ? currentUser.displayName : partnerData.displayName;
-    const user2Name = user2 === currentUser.uid ? currentUser.displayName : partnerData.displayName;
+    const user1Name = user1 === currentUser.uid ? currentUser.displayName : resolvedPartner.displayName;
+    const user2Name = user2 === currentUser.uid ? currentUser.displayName : resolvedPartner.displayName;
 
-    // Create shared ledger
     const initialLedger: SharedLedger = {
       id: ledgerId,
       members,
@@ -306,14 +368,9 @@ export async function pairWithRoommate(
     };
 
     // Save ledger locally
-    try {
-      localStorage.setItem('eq_ledger_' + ledgerId, JSON.stringify(initialLedger));
-      window.dispatchEvent(new CustomEvent('eq_ledger_updated', { detail: initialLedger }));
-    } catch {
-      // ignore
-    }
+    saveLocalLedger(initialLedger);
 
-    // Try creating ledger in Firestore
+    // Sync ledger to Firestore FIRST so document exists with members
     try {
       const ledgerRef = doc(db, 'shared_ledgers', ledgerId);
       await setDoc(ledgerRef, initialLedger, { merge: true });
@@ -324,18 +381,28 @@ export async function pairWithRoommate(
     // Update current user profile
     await updateUserProfile(currentUser.uid, {
       partnerUid,
-      partnerEmail: partnerData.email,
-      partnerName: partnerData.displayName,
+      partnerEmail: resolvedPartner.email,
+      partnerName: resolvedPartner.displayName,
     });
 
-    // Update partner profile if local
-    await updateUserProfile(partnerUid, {
-      partnerUid: currentUser.uid,
-      partnerEmail: currentUser.email,
-      partnerName: currentUser.displayName,
-    });
+    // Update partner profile in background
+    if (partnerUid && !partnerUid.startsWith('partner_')) {
+      try {
+        await setDoc(
+          doc(db, 'users', partnerUid),
+          {
+            partnerUid: currentUser.uid,
+            partnerEmail: currentUser.email,
+            partnerName: currentUser.displayName,
+          },
+          { merge: true }
+        );
+      } catch (e) {
+        console.warn('Partner profile cross-update notice:', e);
+      }
+    }
 
-    return { success: true, partnerProfile: partnerData };
+    return { success: true, partnerProfile: resolvedPartner };
   } catch (error) {
     console.error('Failed to pair profiles', error);
     return {
@@ -353,7 +420,7 @@ export async function unlinkPartner(currentUser: UserProfile): Promise<void> {
     partnerName: '',
   });
 
-  if (partnerUid) {
+  if (partnerUid && !partnerUid.startsWith('partner_')) {
     try {
       await updateUserProfile(partnerUid, {
         partnerUid: '',

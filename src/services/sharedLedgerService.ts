@@ -14,8 +14,19 @@ import { SharedLedger, SharedTransaction } from '../types';
 const LEDGER_KEY_PREFIX = 'eq_ledger_';
 const TXS_KEY_PREFIX = 'eq_txs_';
 
-export function getLedgerId(uid1: string, uid2: string): string {
-  return [uid1, uid2].sort().join('_');
+export function getLedgerId(
+  uid1: string,
+  uid2?: string,
+  email1?: string | null,
+  email2?: string | null
+): string {
+  if (email1 && email2 && email1.trim() && email2.trim()) {
+    const cleanE1 = email1.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+    const cleanE2 = email2.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+    const sorted = [cleanE1, cleanE2].sort();
+    return `ledger_${sorted[0]}___${sorted[1]}`;
+  }
+  return [uid1, uid2 || 'partner'].sort().join('_');
 }
 
 export function getLocalLedger(ledgerId: string): SharedLedger | null {
@@ -98,7 +109,6 @@ export function listenToSharedLedger(
       },
       (error) => {
         handleFirestoreError(error, OperationType.GET, path);
-        // Fall back to local
         callback(getLocalLedger(ledgerId));
       }
     );
@@ -193,9 +203,9 @@ export async function addSharedTransaction(
 
   // 2. Update local ledger balance
   let currentLedger = getLocalLedger(ledgerId);
-  const members = ledgerId.split('_');
-  const user1 = members[0] || '';
-  const user2 = members[1] || '';
+  const members = currentLedger?.members || ledgerId.split('_');
+  const user1 = currentLedger?.user1 || members[0] || '';
+  const user2 = currentLedger?.user2 || members[1] || '';
 
   if (!currentLedger) {
     currentLedger = {
@@ -208,7 +218,10 @@ export async function addSharedTransaction(
     };
   }
 
-  const isUser1Payer = fullTx.paidBy === currentLedger.user1;
+  const isUser1Payer =
+    fullTx.paidBy === currentLedger.user1 ||
+    (currentLedger.user1Name && fullTx.paidByName === currentLedger.user1Name);
+
   const balanceDelta = isUser1Payer
     ? fullTx.splitAmountOther
     : -fullTx.splitAmountOther;
@@ -221,13 +234,13 @@ export async function addSharedTransaction(
   };
   saveLocalLedger(updatedLedger);
 
-  // 3. Sync to Firestore in background
+  // 3. Sync to Firestore in background: Save ledger FIRST so document exists
   try {
-    const txRef = doc(db, 'shared_ledgers', ledgerId, 'transactions', newTxId);
     const ledgerRef = doc(db, 'shared_ledgers', ledgerId);
+    const txRef = doc(db, 'shared_ledgers', ledgerId, 'transactions', newTxId);
 
-    await setDoc(txRef, fullTx, { merge: true });
     await setDoc(ledgerRef, updatedLedger, { merge: true });
+    await setDoc(txRef, fullTx, { merge: true });
   } catch (err) {
     console.warn('Firestore shared transaction sync deferred:', err);
   }
@@ -244,7 +257,6 @@ export async function settleUpLedger(
   const currentLedger = getLocalLedger(ledgerId);
   const now = new Date().toISOString();
 
-  // Create settlement record
   const settleTx: SharedTransaction = {
     id: 'settle_' + Date.now(),
     paidBy: payerUid,
@@ -257,11 +269,9 @@ export async function settleUpLedger(
     isSettlement: true,
   };
 
-  // Update local transactions
   const currentTxs = getLocalTransactions(ledgerId);
   saveLocalTransactions(ledgerId, [settleTx, ...currentTxs]);
 
-  // Update local ledger
   if (currentLedger) {
     const settledLedger: SharedLedger = {
       ...currentLedger,
@@ -269,18 +279,16 @@ export async function settleUpLedger(
       lastUpdated: now,
     };
     saveLocalLedger(settledLedger);
-  }
 
-  // Sync to Firestore in background
-  try {
-    const ledgerRef = doc(db, 'shared_ledgers', ledgerId);
-    const txRef = doc(db, 'shared_ledgers', ledgerId, 'transactions', settleTx.id!);
-    await setDoc(txRef, settleTx, { merge: true });
-    await setDoc(ledgerRef, { netBalance: 0, lastUpdated: now }, { merge: true });
-  } catch (err) {
-    console.warn('Firestore settle sync deferred:', err);
+    try {
+      const ledgerRef = doc(db, 'shared_ledgers', ledgerId);
+      const txRef = doc(db, 'shared_ledgers', ledgerId, 'transactions', settleTx.id!);
+      await setDoc(ledgerRef, { netBalance: 0, lastUpdated: now }, { merge: true });
+      await setDoc(txRef, settleTx, { merge: true });
+    } catch (err) {
+      console.warn('Firestore settle sync deferred:', err);
+    }
   }
 }
 
 export const settleSharedLedger = settleUpLedger;
-

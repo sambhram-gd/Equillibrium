@@ -78,7 +78,12 @@ export default function App() {
   const [sharedLedger, setSharedLedger] = useState<SharedLedger | null>(() => {
     const initialProf = getLocalProfile();
     if (initialProf?.uid && initialProf?.partnerUid) {
-      const lid = getLedgerId(initialProf.uid, initialProf.partnerUid);
+      const lid = getLedgerId(
+        initialProf.uid,
+        initialProf.partnerUid,
+        initialProf.email,
+        initialProf.partnerEmail
+      );
       return getLocalLedger(lid);
     }
     return null;
@@ -87,7 +92,12 @@ export default function App() {
   const [sharedTransactions, setSharedTransactions] = useState<SharedTransaction[]>(() => {
     const initialProf = getLocalProfile();
     if (initialProf?.uid && initialProf?.partnerUid) {
-      const lid = getLedgerId(initialProf.uid, initialProf.partnerUid);
+      const lid = getLedgerId(
+        initialProf.uid,
+        initialProf.partnerUid,
+        initialProf.email,
+        initialProf.partnerEmail
+      );
       return getLocalTransactions(lid);
     }
     return [];
@@ -173,7 +183,12 @@ export default function App() {
       return;
     }
 
-    const ledgerId = getLedgerId(authUser.uid, userProfile.partnerUid);
+    const ledgerId = getLedgerId(
+      authUser.uid,
+      userProfile.partnerUid,
+      authUser.email,
+      userProfile.partnerEmail
+    );
 
     const unsubscribeLedger = listenToSharedLedger(ledgerId, (ledger) => {
       setSharedLedger(ledger);
@@ -187,7 +202,7 @@ export default function App() {
       unsubscribeLedger();
       unsubscribeTxs();
     };
-  }, [authUser, userProfile?.partnerUid]);
+  }, [authUser, userProfile?.partnerUid, userProfile?.partnerEmail]);
 
   // Loading Screen (only if we truly have no auth data yet)
   if (authLoading && !authUser && !userProfile) {
@@ -229,10 +244,12 @@ export default function App() {
   // Calculate net balance for bottom nav badge
   let userNetBalance = 0;
   if (sharedLedger) {
-    userNetBalance =
-      userProfile.uid === sharedLedger.user1
-        ? sharedLedger.netBalance
-        : -sharedLedger.netBalance;
+    const isUser1 =
+      userProfile.uid === sharedLedger.user1 ||
+      (userProfile.email && sharedLedger.user1 && sharedLedger.user1.includes(userProfile.email.toLowerCase().replace(/[^a-z0-9]/g, '_')));
+    userNetBalance = isUser1
+      ? sharedLedger.netBalance
+      : -sharedLedger.netBalance;
   }
 
   return (

@@ -62,11 +62,10 @@ export const SharedLedgerView: React.FC<SharedLedgerViewProps> = ({
   // netBalance > 0: user1 is owed; netBalance < 0: user2 is owed
   let userNetBalance = 0;
   if (ledger) {
-    if (user.uid === ledger.user1) {
-      userNetBalance = ledger.netBalance;
-    } else {
-      userNetBalance = -ledger.netBalance;
-    }
+    const isUser1 =
+      user.uid === ledger.user1 ||
+      (user.email && ledger.user1 && ledger.user1.includes(user.email.toLowerCase().replace(/[^a-z0-9]/g, '_')));
+    userNetBalance = isUser1 ? ledger.netBalance : -ledger.netBalance;
   }
 
   const formatINR = (val: number) => {
