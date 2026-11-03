@@ -12,6 +12,7 @@ import {
   getLedgerId,
 } from '../services/sharedLedgerService';
 import { DailyExpenseChart } from './DailyExpenseChart';
+import { EditLogModal } from './EditLogModal';
 
 interface PersonalSpaceProps {
   user: UserProfile;
@@ -47,6 +48,7 @@ export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
   const [filterPeriod, setFilterPeriod] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [editingLog, setEditingLog] = useState<PersonalLog | null>(null);
 
   // Date selection state
   const getTodayStr = () => {
@@ -728,13 +730,22 @@ export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleDeleteLog(log)}
-                      className="p-1.5 rounded-lg text-[#94a3b8] hover:text-rose-300 hover:bg-rose-500/15 transition-all active:scale-90"
-                      title="Delete log"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditingLog(log)}
+                        className="p-1.5 rounded-lg text-[#94a3b8] hover:text-[#34d399] hover:bg-[#34d399]/15 transition-all active:scale-90"
+                        title={isDebit ? 'Edit expense' : 'Edit credit / salary'}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLog(log)}
+                        className="p-1.5 rounded-lg text-[#94a3b8] hover:text-rose-300 hover:bg-rose-500/15 transition-all active:scale-90"
+                        title="Delete log"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -742,6 +753,19 @@ export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
           </div>
         )}
       </div>
+
+      {/* Edit Log Modal */}
+      {editingLog && (
+        <EditLogModal
+          user={user}
+          log={editingLog}
+          isOpen={!!editingLog}
+          onClose={() => setEditingLog(null)}
+          onSuccess={(updated) => {
+            showToast(`Updated ${formatINR(updated.amount)} (${updated.category})`);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -16,12 +16,46 @@ export const QuickIncomeModal: React.FC<QuickIncomeModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const getTodayStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getYesterdayStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = getTodayStr();
+  const yesterdayStr = getYesterdayStr();
+
   const [amount, setAmount] = useState<string>('');
   const [isSalary, setIsSalary] = useState<boolean>(true);
   const [sourceNote, setSourceNote] = useState<string>('Monthly Salary');
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   if (!isOpen) return null;
+
+  const formatDisplayDate = (dStr: string) => {
+    if (dStr === todayStr) return 'Today';
+    if (dStr === yesterdayStr) return 'Yesterday';
+    const [year, month, day] = dStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString('en-IN', {
+      month: 'short',
+      day: 'numeric',
+      year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +64,18 @@ export const QuickIncomeModal: React.FC<QuickIncomeModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const [year, month, day] = selectedDate.split('-').map(Number);
       const now = new Date();
-      const formattedDate = now.toLocaleDateString('en-IN', {
+      const creditDate = new Date(
+        year,
+        month - 1,
+        day,
+        now.getHours(),
+        now.getMinutes(),
+        now.getSeconds()
+      );
+
+      const formattedDate = creditDate.toLocaleDateString('en-IN', {
         month: 'short',
         day: 'numeric',
       });
@@ -41,7 +85,7 @@ export const QuickIncomeModal: React.FC<QuickIncomeModalProps> = ({
         amount: val,
         category: isSalary ? 'Salary' : 'Deposit',
         type: 'credit',
-        timestamp: now.toISOString(),
+        timestamp: creditDate.toISOString(),
         note: sourceNote.trim() || (isSalary ? 'Salary Credit' : 'Cash Deposit'),
       });
 
@@ -143,6 +187,83 @@ export const QuickIncomeModal: React.FC<QuickIncomeModalProps> = ({
                 className="w-full pl-10 pr-4 py-3.5 bg-[#070c18] border border-white/10 rounded-2xl text-base font-bold text-white placeholder-white/20 focus:border-[#34d399] focus:outline-none"
               />
             </div>
+          </div>
+
+          {/* Date Credited Selector */}
+          <div className="bg-[#070c18] p-3 rounded-2xl border border-white/10 flex flex-col gap-2">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 text-[#94a3b8]">
+                <span className="material-symbols-outlined text-[#34d399] text-[16px]">
+                  calendar_today
+                </span>
+                <span className="font-semibold">Credited on:</span>
+                <strong className="text-white font-headline">{formatDisplayDate(selectedDate)}</strong>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDate(todayStr);
+                    setShowDatePicker(false);
+                  }}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
+                    selectedDate === todayStr && !showDatePicker
+                      ? 'bg-[#34d399] text-[#013421]'
+                      : 'bg-white/10 text-[#94a3b8] hover:text-white'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDate(yesterdayStr);
+                    setShowDatePicker(false);
+                  }}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
+                    selectedDate === yesterdayStr && !showDatePicker
+                      ? 'bg-[#34d399] text-[#013421]'
+                      : 'bg-white/10 text-[#94a3b8] hover:text-white'
+                  }`}
+                >
+                  Yesterday
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-0.5 transition-all ${
+                    showDatePicker || (selectedDate !== todayStr && selectedDate !== yesterdayStr)
+                      ? 'bg-[#34d399] text-[#013421]'
+                      : 'bg-white/10 text-[#94a3b8] hover:text-white'
+                  }`}
+                >
+                  <span>Pick</span>
+                  <span className="material-symbols-outlined text-[11px]">
+                    {showDatePicker ? 'expand_less' : 'event'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {showDatePicker && (
+              <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                <span className="text-[11px] text-[#94a3b8] whitespace-nowrap">
+                  Exact Date:
+                </span>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  max={todayStr}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setSelectedDate(e.target.value);
+                    }
+                  }}
+                  className="flex-1 bg-[#121a2d] border border-white/10 rounded-xl px-2.5 py-1 text-xs text-white focus:border-[#34d399] focus:outline-none"
+                />
+              </div>
+            )}
           </div>
 
           {/* Source Note */}

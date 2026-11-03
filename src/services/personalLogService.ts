@@ -9,7 +9,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { PersonalLog } from '../types';
+import { PersonalLog, UserProfile } from '../types';
 import { getLocalProfile, updateUserProfile } from './userService';
 
 const LOGS_STORAGE_KEY_PREFIX = 'eq_personal_logs_';
@@ -146,6 +146,55 @@ export async function addPersonalLog(
   return newLogId;
 }
 
+export async function updatePersonalLog(
+  userId: string,
+  logId: string,
+  updatedLog: PersonalLog,
+  oldLog: PersonalLog
+): Promise<void> {
+  // 1. Update in local storage
+  const currentLogs = getLocalPersonalLogs(userId);
+  const updatedLogs = currentLogs
+    .map((l) => (l.id === logId ? updatedLog : l))
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  saveLocalPersonalLogs(userId, updatedLogs);
+
+  // 2. Adjust liquid balance
+  const oldDelta = oldLog.type === 'debit' ? -oldLog.amount : oldLog.amount;
+  const newDelta = updatedLog.type === 'debit' ? -updatedLog.amount : updatedLog.amount;
+  const netBalanceChange = newDelta - oldDelta;
+
+  const currentProfile = getLocalProfile(userId);
+  const currentBalance = currentProfile?.currentBalance ?? 0;
+  const updatedBalance = currentBalance + netBalanceChange;
+
+  const profileUpdates: Partial<UserProfile> = {
+    currentBalance: updatedBalance,
+  };
+
+  // If this log is a salary credit, update user's salary info
+  if (updatedLog.category.toLowerCase().includes('salary') && updatedLog.type === 'credit') {
+    profileUpdates.salaryAmount = updatedLog.amount;
+    const logDate = new Date(updatedLog.timestamp);
+    profileUpdates.salaryDate = logDate.toLocaleDateString('en-IN', {
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  await updateUserProfile(userId, profileUpdates);
+
+  // 3. Sync to Firestore in background
+  try {
+    const logRef = doc(db, 'users', userId, 'personal_logs', logId);
+    await setDoc(logRef, updatedLog, { merge: true });
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, { currentBalance: updatedBalance }, { merge: true });
+  } catch (err) {
+    console.warn('Firestore personal log update deferred:', err);
+  }
+}
+
 export async function deletePersonalLog(
   userId: string,
   logId: string,
@@ -162,9 +211,26 @@ export async function deletePersonalLog(
   const revertDelta = log.type === 'debit' ? log.amount : -log.amount;
   const updatedBalance = currentBalance + revertDelta;
 
-  await updateUserProfile(userId, {
+  const profileUpdates: Partial<UserProfile> = {
     currentBalance: updatedBalance,
-  });
+  };
+
+  // If the deleted log was a salary credit, check if there is an older salary log to restore
+  if (log.category.toLowerCase().includes('salary') && log.type === 'credit') {
+    const remainingSalaryLog = updatedLogs.find(
+      (l) => l.category.toLowerCase().includes('salary') && l.type === 'credit'
+    );
+    if (remainingSalaryLog) {
+      profileUpdates.salaryAmount = remainingSalaryLog.amount;
+      const d = new Date(remainingSalaryLog.timestamp);
+      profileUpdates.salaryDate = d.toLocaleDateString('en-IN', {
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+  }
+
+  await updateUserProfile(userId, profileUpdates);
 
   // 3. Delete from Firestore in background
   try {

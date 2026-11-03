@@ -9,6 +9,7 @@ import {
   notifyRoommateActivity,
   playNotificationChime,
 } from '../services/notificationService';
+import { ProfileSettingsModal } from './ProfileSettingsModal';
 
 interface HeaderProps {
   user: UserProfile;
@@ -17,6 +18,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ user, onOpenIncomeModal }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [notifyOn, setNotifyOn] = useState<boolean>(() => isNotificationsEnabled());
   const [isRequestingNotify, setIsRequestingNotify] = useState<boolean>(false);
@@ -230,6 +232,25 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenIncomeModal }) => {
                     </button>
                   </div>
 
+                  {/* Vault & Salary Settings Button */}
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowSettingsModal(true);
+                    }}
+                    className="w-full py-2.5 px-3 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08] font-bold text-xs flex items-center justify-between active:scale-98 transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-[#34d399]">
+                        tune
+                      </span>
+                      <span>Vault & Salary Settings</span>
+                    </div>
+                    <span className="material-symbols-outlined text-[16px] text-[#94a3b8]">
+                      chevron_right
+                    </span>
+                  </button>
+
                   {/* Partner link status pill */}
                   <div className="text-[11px] text-[#94a3b8] flex items-center gap-2 px-1">
                     <span className="material-symbols-outlined text-[16px] text-[#adc6ff]">
@@ -258,6 +279,12 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenIncomeModal }) => {
           </div>
         </div>
       </div>
+
+      <ProfileSettingsModal
+        user={user}
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
     </header>
   );
 };
