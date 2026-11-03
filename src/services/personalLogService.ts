@@ -11,6 +11,7 @@ import {
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { PersonalLog, UserProfile } from '../types';
 import { getLocalProfile, updateUserProfile } from './userService';
+import { SAMBHRAM_TRANSACTIONS } from '../data/sambhramTransactions';
 
 const LOGS_STORAGE_KEY_PREFIX = 'eq_personal_logs_';
 
@@ -18,11 +19,19 @@ export function getLocalPersonalLogs(userId: string): PersonalLog[] {
   try {
     const raw = localStorage.getItem(LOGS_STORAGE_KEY_PREFIX + userId);
     if (raw) {
-      return JSON.parse(raw) as PersonalLog[];
+      const parsed = JSON.parse(raw) as PersonalLog[];
+      if (parsed && parsed.length > 0) return parsed;
     }
   } catch (e) {
     console.warn('Failed to parse local personal logs', e);
   }
+
+  // Auto-seed Sambhram Doddamane's PhonePe dataset (Feb 14 - Present)
+  if (!userId || userId === 'sambhram_doddamane' || userId.includes('sambhram') || userId.startsWith('guest_')) {
+    saveLocalPersonalLogs(userId || 'sambhram_doddamane', SAMBHRAM_TRANSACTIONS);
+    return SAMBHRAM_TRANSACTIONS;
+  }
+
   return [];
 }
 
@@ -64,7 +73,7 @@ export function listenToPersonalLogs(
     const q = query(
       collection(db, 'users', userId, 'personal_logs'),
       orderBy('timestamp', 'desc'),
-      limit(100)
+      limit(2000)
     );
 
     unsubscribeFirestore = onSnapshot(

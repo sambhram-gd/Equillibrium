@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { loginWithGoogle } from '../firebase';
+import { SAMBHRAM_PROFILE, SAMBHRAM_TRANSACTIONS } from '../data/sambhramTransactions';
+import { saveLocalProfile } from '../services/userService';
+import { saveLocalPersonalLogs } from '../services/personalLogService';
 
 interface AuthScreenProps {
   onGuestLogin?: () => void;
@@ -24,16 +27,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onGuestLogin }) => {
   };
 
   const handleGuestAccess = () => {
-    const guestUser = {
-      uid: 'guest_' + Math.random().toString(36).substring(2, 9),
-      displayName: 'Equilibrium User',
-      email: 'user@equilibrium.local',
+    const sambhramUser = {
+      uid: 'sambhram_doddamane',
+      displayName: 'Sambhram Doddamane',
+      email: 'sambhram.doddamane@spookfish.in',
     };
     try {
-      localStorage.setItem('eq_guest_user', JSON.stringify(guestUser));
+      localStorage.setItem('eq_guest_user', JSON.stringify(sambhramUser));
+      saveLocalProfile(SAMBHRAM_PROFILE);
+      saveLocalPersonalLogs(sambhramUser.uid, SAMBHRAM_TRANSACTIONS);
       window.dispatchEvent(new CustomEvent('eq_auth_changed'));
     } catch (e) {
-      console.warn('Failed to save guest user', e);
+      console.warn('Failed to save user', e);
     }
     if (onGuestLogin) {
       onGuestLogin();
@@ -150,7 +155,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onGuestLogin }) => {
           className="w-full py-3.5 bg-[#121a2d] hover:bg-[#1c263c] border border-white/10 text-white rounded-2xl font-headline font-semibold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md"
         >
           <span className="material-symbols-outlined text-[18px] text-[#34d399]">bolt</span>
-          <span>Quick Access (Offline / Local Mode)</span>
+          <span>Explore as Sambhram Doddamane (PhonePe Synced)</span>
         </button>
 
         <p className="text-[10px] text-center text-[#a0aec0] mt-1">

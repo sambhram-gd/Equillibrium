@@ -6,13 +6,13 @@ interface DailyExpenseChartProps {
   salaryDate?: string;
 }
 
-type TimeRange = '7d' | '14d' | '30d';
+type TimeRange = '7d' | '30d' | '90d' | 'all';
 
 export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
   logs,
   salaryDate,
 }) => {
-  const [range, setRange] = useState<TimeRange>('7d');
+  const [range, setRange] = useState<TimeRange>('30d');
   const [activePoint, setActivePoint] = useState<{
     key: string;
     dateStr: string;
@@ -23,7 +23,14 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
     y: number;
   } | null>(null);
 
-  const daysCount = range === '7d' ? 7 : range === '14d' ? 14 : 30;
+  const daysCount = useMemo(() => {
+    if (range === '7d') return 7;
+    if (range === '30d') return 30;
+    if (range === '90d') return 90;
+    const feb14 = new Date('2026-02-14T00:00:00').getTime();
+    const diffDays = Math.ceil((new Date().getTime() - feb14) / (1000 * 60 * 60 * 24));
+    return Math.max(30, diffDays);
+  }, [range]);
 
   // Process and aggregate daily expenses
   const chartData = useMemo(() => {
@@ -183,20 +190,20 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
 
         {/* Range Selector */}
         <div className="bg-[#070c18] p-1 rounded-xl border border-white/10 flex items-center gap-1">
-          {(['7d', '14d', '30d'] as const).map((r) => (
+          {(['7d', '30d', '90d', 'all'] as const).map((r) => (
             <button
               key={r}
               onClick={() => {
                 setRange(r);
                 setActivePoint(null);
               }}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold font-headline transition-all ${
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold font-headline transition-all ${
                 range === r
                   ? 'bg-gradient-to-r from-[#10b981] to-[#34d399] text-[#013421] shadow-xs'
                   : 'text-[#a0aec0] hover:text-white'
               }`}
             >
-              {r.toUpperCase()}
+              {r === 'all' ? 'All (Feb 14)' : r.toUpperCase()}
             </button>
           ))}
         </div>
@@ -335,7 +342,14 @@ export const DailyExpenseChart: React.FC<DailyExpenseChartProps> = ({
 
           {/* X-Axis Day Labels */}
           {mappedPoints.map((pt, idx) => {
-            const step = range === '30d' ? 6 : range === '14d' ? 3 : 1;
+            const step =
+              range === 'all'
+                ? Math.max(1, Math.floor(mappedPoints.length / 5))
+                : range === '90d'
+                ? 18
+                : range === '30d'
+                ? 6
+                : 1;
             const isLast = idx === mappedPoints.length - 1;
             const isFirst = idx === 0;
             if (!isLast && !isFirst && idx % step !== 0) return null;

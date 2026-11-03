@@ -25,11 +25,16 @@ const CATEGORIES: { name: PersonalLogCategory; icon: string }[] = [
   { name: 'Coffee', icon: 'local_cafe' },
   { name: 'Breakfast', icon: 'bakery_dining' },
   { name: 'Metro', icon: 'subway' },
+  { name: 'Train', icon: 'train' },
   { name: 'Bus', icon: 'directions_bus' },
   { name: 'Lunch', icon: 'lunch_dining' },
   { name: 'Dinner', icon: 'dinner_dining' },
   { name: 'Groceries', icon: 'shopping_cart' },
+  { name: 'Rent', icon: 'home' },
   { name: 'Utilities', icon: 'bolt' },
+  { name: 'Family', icon: 'family_restroom' },
+  { name: 'Deposit', icon: 'savings' },
+  { name: 'Salary', icon: 'payments' },
   { name: 'Misc', icon: 'category' },
 ];
 
@@ -46,6 +51,7 @@ export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
   const [note, setNote] = useState<string>('');
   const [showNoteField, setShowNoteField] = useState<boolean>(false);
   const [filterPeriod, setFilterPeriod] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [passbookCategory, setPassbookCategory] = useState<string>('all');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [editingLog, setEditingLog] = useState<PersonalLog | null>(null);
@@ -239,15 +245,36 @@ export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
     }
   };
 
-  const filteredLogs = filterLogsByPeriod(logs, filterPeriod);
+  const periodLogs = filterLogsByPeriod(logs, filterPeriod);
+  const filteredLogs = periodLogs.filter((log) => {
+    if (passbookCategory === 'all') return true;
+    if (passbookCategory === 'Food') {
+      return ['lunch', 'dinner', 'breakfast', 'coffee'].includes(log.category.toLowerCase());
+    }
+    return log.category.toLowerCase() === passbookCategory.toLowerCase();
+  });
 
   // Category Icon Resolver
   const getCategoryIcon = (category: string) => {
+    const c = (category || '').toLowerCase();
+    if (c.includes('metro') || c.includes('ixigo')) return 'subway';
+    if (c.includes('train') || c.includes('irctc') || c.includes('travel')) return 'train';
+    if (c.includes('bus') || c.includes('bmtc')) return 'directions_bus';
+    if (c.includes('rent') || c.includes('pg') || c.includes('bedz')) return 'home';
+    if (c.includes('family') || c.includes('mom') || c.includes('shambhavi') || c.includes('shubham')) return 'family_restroom';
+    if (c.includes('salary') || c.includes('income')) return 'payments';
+    if (c.includes('deposit') || c.includes('refund')) return 'savings';
+    if (c.includes('coffee') || c.includes('tea')) return 'local_cafe';
+    if (c.includes('breakfast')) return 'bakery_dining';
+    if (c.includes('lunch')) return 'lunch_dining';
+    if (c.includes('dinner')) return 'dinner_dining';
+    if (c.includes('groceries') || c.includes('mart') || c.includes('bazaar')) return 'shopping_cart';
+    if (c.includes('utilities') || c.includes('recharge')) return 'bolt';
+
     const found = CATEGORIES.find(
-      (c) => c.name.toLowerCase() === category.toLowerCase()
+      (cat) => cat.name.toLowerCase() === c
     );
     if (found) return found.icon;
-    if (category.toLowerCase().includes('salary')) return 'payments';
     return 'receipt';
   };
 
@@ -654,6 +681,53 @@ export const PersonalSpace: React.FC<PersonalSpaceProps> = ({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Category Quick Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+          {[
+            { id: 'all', label: 'All', icon: 'all_inclusive' },
+            { id: 'Metro', label: 'Metro', icon: 'subway' },
+            { id: 'Train', label: 'Train', icon: 'train' },
+            { id: 'Rent', label: 'PG Rent', icon: 'home' },
+            { id: 'Family', label: 'Mom', icon: 'family_restroom' },
+            { id: 'Food', label: 'Food', icon: 'restaurant' },
+            { id: 'Groceries', label: 'Groceries', icon: 'shopping_cart' },
+            { id: 'Utilities', label: 'Bills', icon: 'bolt' },
+            { id: 'Deposit', label: 'Deposits', icon: 'savings' },
+            { id: 'Misc', label: 'Misc', icon: 'category' },
+          ].map((cat) => {
+            const isSelected = passbookCategory.toLowerCase() === cat.id.toLowerCase();
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setPassbookCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 active:scale-95 ${
+                  isSelected
+                    ? 'bg-[#34d399] text-[#013421] shadow-md shadow-[#10b981]/25 ring-1 ring-white/20'
+                    : 'bg-white/[0.06] text-[#94a3b8] hover:text-white border border-white/[0.05]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[15px]">{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Base Date Indicator Banner */}
+        <div className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-[#121a2d] to-[#070c18] border border-white/[0.08] flex items-center justify-between text-[11px] text-[#94a3b8]">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#34d399] text-[16px]">
+              verified
+            </span>
+            <span>
+              Base Date: <strong className="text-white">14th Feb 2026</strong> → Present
+            </span>
+          </div>
+          <span className="font-mono text-[10px] text-[#34d399] font-bold">
+            {filteredLogs.length} Records
+          </span>
         </div>
 
         {/* Log Entries List */}

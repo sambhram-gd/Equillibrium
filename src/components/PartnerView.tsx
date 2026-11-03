@@ -237,7 +237,9 @@ export const PartnerView: React.FC<PartnerViewProps> = ({
     const c = (category || '').toLowerCase();
     if (c.includes('coffee') || c.includes('cafe')) return 'local_cafe';
     if (c.includes('breakfast') || c.includes('bakery')) return 'bakery_dining';
-    if (c.includes('metro') || c.includes('subway') || c.includes('train')) return 'subway';
+    if (c.includes('train') || c.includes('irctc')) return 'train';
+    if (c.includes('metro') || c.includes('subway') || c.includes('ixigo')) return 'subway';
+    if (c.includes('family') || c.includes('mom') || c.includes('shambhavi') || c.includes('shubham')) return 'family_restroom';
     if (c.includes('bus')) return 'directions_bus';
     if (c.includes('lunch')) return 'lunch_dining';
     if (c.includes('dinner')) return 'dinner_dining';

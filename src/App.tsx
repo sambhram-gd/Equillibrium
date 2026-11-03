@@ -59,7 +59,12 @@ function getInitialUser(): AppUser | null {
   } catch {
     // ignore
   }
-  return null;
+  // Default to Sambhram Doddamane
+  return {
+    uid: 'sambhram_doddamane',
+    displayName: 'Sambhram Doddamane',
+    email: 'sambhram.doddamane@spookfish.in',
+  };
 }
 
 export default function App() {

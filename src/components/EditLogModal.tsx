@@ -14,11 +14,14 @@ const CATEGORIES: { name: PersonalLogCategory; icon: string }[] = [
   { name: 'Coffee', icon: 'local_cafe' },
   { name: 'Breakfast', icon: 'bakery_dining' },
   { name: 'Metro', icon: 'subway' },
+  { name: 'Train', icon: 'train' },
   { name: 'Bus', icon: 'directions_bus' },
   { name: 'Lunch', icon: 'lunch_dining' },
   { name: 'Dinner', icon: 'dinner_dining' },
   { name: 'Groceries', icon: 'shopping_cart' },
+  { name: 'Rent', icon: 'home' },
   { name: 'Utilities', icon: 'bolt' },
+  { name: 'Family', icon: 'family_restroom' },
   { name: 'Misc', icon: 'category' },
 ];
 
@@ -384,3 +387,4 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
     </div>
   );
 };
+

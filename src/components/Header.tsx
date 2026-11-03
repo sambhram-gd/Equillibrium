@@ -10,6 +10,7 @@ import {
   playNotificationChime,
 } from '../services/notificationService';
 import { ProfileSettingsModal } from './ProfileSettingsModal';
+import { resetToSambhramPhonePe } from '../services/userService';
 
 interface HeaderProps {
   user: UserProfile;
@@ -248,6 +249,27 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenIncomeModal }) => {
                     </div>
                     <span className="material-symbols-outlined text-[16px] text-[#94a3b8]">
                       chevron_right
+                    </span>
+                  </button>
+
+                  {/* Reset to Sambhram PhonePe Statement Button */}
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      if (window.confirm('Reload all 554 PhonePe transactions (14th Feb – Present)? Any personal logs will be re-synced.')) {
+                        resetToSambhramPhonePe(user.uid);
+                      }
+                    }}
+                    className="w-full py-2.5 px-3 rounded-2xl bg-[#34d399]/10 hover:bg-[#34d399]/20 text-[#34d399] border border-[#34d399]/20 font-bold text-xs flex items-center justify-between active:scale-98 transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px]">
+                        cloud_download
+                      </span>
+                      <span>Reload PhonePe Statement</span>
+                    </div>
+                    <span className="text-[10px] bg-[#34d399]/20 px-2 py-0.5 rounded-full font-mono">
+                      554 txs
                     </span>
                   </button>
 

@@ -12,6 +12,7 @@ import {
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { UserProfile, PairingCodeDoc, SharedLedger } from '../types';
 import { getLedgerId, saveLocalLedger } from './sharedLedgerService';
+import { SAMBHRAM_PROFILE, SAMBHRAM_TRANSACTIONS } from '../data/sambhramTransactions';
 
 const PROFILE_KEY_PREFIX = 'eq_profile_';
 const LAST_PROFILE_KEY = 'eq_last_profile';
@@ -40,7 +41,27 @@ export function getLocalProfile(uid?: string): UserProfile | null {
   } catch (e) {
     console.warn('Failed to parse local profile', e);
   }
+  if (!uid || uid === 'sambhram_doddamane' || uid.includes('sambhram') || uid.startsWith('guest_')) {
+    return {
+      ...SAMBHRAM_PROFILE,
+      uid: uid || SAMBHRAM_PROFILE.uid,
+    };
+  }
   return null;
+}
+
+export function resetToSambhramPhonePe(userId?: string): void {
+  const targetUid = userId || 'sambhram_doddamane';
+  const profile: UserProfile = {
+    ...SAMBHRAM_PROFILE,
+    uid: targetUid,
+  };
+  saveLocalProfile(profile);
+  localStorage.setItem('eq_personal_logs_' + targetUid, JSON.stringify(SAMBHRAM_TRANSACTIONS));
+  window.dispatchEvent(new CustomEvent('eq_profile_updated', { detail: profile }));
+  window.dispatchEvent(
+    new CustomEvent('eq_logs_updated', { detail: { userId: targetUid, logs: SAMBHRAM_TRANSACTIONS } })
+  );
 }
 
 export function saveLocalProfile(profile: UserProfile): void {
